@@ -6,11 +6,12 @@ var palette = [];
 var paletteCircles = [];
 var circleIndex = -1;
 var circledx, circledy;
-var ctx, imgScaleWidth, imgScaleHeight;
+var ctx, imgScale;
 var img, uiFrame;
 var stroke = 3;
 var imgData;
 var reDrawTimer;
+var totalOffset = {x: 0, y: 0};
 
 // Let us know when the user wants to load an image
 function startApp() {
@@ -23,9 +24,26 @@ function buttonClicked() {
 	$('#imageUploadBrowse').trigger('click');
 }
 
+function getOffset(object, offset)
+{
+	if (!object)
+		return;
+		
+	offset.x += object.offsetLeft;
+	offset.y += object.offsetTop;
+	
+	getOffset(object.offsetParent, offset);
+}
+
 function findCircle(event) {
-    var x = event.x - uiFrame.offsetLeft,
-        y = event.y - uiFrame.offsetTop;
+	var x, y;
+	
+	totalOffset.x = totalOffset.y = 0;
+	
+	getOffset(uiFrame, totalOffset);
+	
+    var x = event.pageX - totalOffset.x,
+        y = event.pageY - totalOffset.y;
 
     // Collision detection between clicked offset and a circle. Start from the top of the stack down in case
     // there are more than one nearby
@@ -51,8 +69,8 @@ function findCircle(event) {
 
 function moveCircle(event) {
 	// figure out the new placement of the circle
-	paletteCircles[circleIndex].x = Math.round(event.pageX - uiFrame.offsetLeft - circledx);
-	paletteCircles[circleIndex].y = Math.round(event.pageY - uiFrame.offsetTop - circledy);
+	paletteCircles[circleIndex].x = Math.round(event.pageX - totalOffset.x - circledx);
+	paletteCircles[circleIndex].y = Math.round(event.pageY - totalOffset.y - circledy);
 	
 	// figure out the pixel color found under the circle
 	// pixel # = (y * imgWidth + x) * 4 (since each pixel has 4 pieces of data)
@@ -77,7 +95,7 @@ function reDraw() {
 	// draw the image
 	// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 	ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
-	ctx.drawImage(img, 0, 0, imgScaleWidth * img.width, imgScaleHeight * img.height);
+	ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
 	
 	// draw the circles
 	for (var i=0; i<paletteCircles.length; i++)
@@ -142,10 +160,10 @@ function loadImage(evt) {
 				{
 					// Take the smallest number and scale the image by that, guaranteeing that both the width and height will
 					// fit in the area it's going to be drawn to, and the proportions will be constrained
-					imgScaleWidth = imgScaleHeight = Math.min(widthScale, heightScale);
+					imgScale = Math.min(widthScale, heightScale);
 				}
 				else {
-					imgScaleWidth = imgScaleHeight = 1;
+					imgScale = 1;
 				}
 				// check if the user is doing a mousedown over the image so we can see if they are
 				// clicking onto a palette circle
@@ -154,7 +172,7 @@ function loadImage(evt) {
 				// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 				// clear the canvas first so we're not drawing a bunch of images on top of each other
 				ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
-				ctx.drawImage(img, 0, 0, imgScaleWidth * img.width, imgScaleHeight * img.height);
+				ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
 
  			  	// Get list of colors in the image (colorutils)
 			  	palette = get_colors(img, ctx);
@@ -180,8 +198,8 @@ function loadImage(evt) {
 							{
 								// if so, draw a circle, and mark it found (so we don't continue to look
 								//ctx.rect((pxl/4)%uiFrame.width, (pxl/4)/uiFrame.width, 5, 5);
-								var x = (pxl/4)%(imgScaleWidth*img.width);
-								var y = (pxl/4)/(imgScaleWidth*img.width);
+								var x = (pxl/4)%img.width; //(imgScale*img.width);
+								var y = (pxl/4)/img.width; //(imgScale*img.width);
 								var radius = 5;
 								paletteCircles[numFound] = {x: x, y: y, radius: radius + stroke, palette:i};
 								numFound++;								
