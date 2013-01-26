@@ -145,6 +145,40 @@ var MMCQ = (function() {
             var vbox = this;
             return new VBox(vbox.r1, vbox.r2, vbox.g1, vbox.g2, vbox.b1, vbox.b2, vbox.histo);
         },
+        //vbox nearest function, added by Gillian Smith (1/25/13)
+        //calculates the nearest color in the histogram to the average color
+        nearest: function() {
+        	var vbox = this, histo = vbox.histo;
+        	var closest_color;
+        	var mult = 1 << (8 - sigbits);
+        	var rval, gval, bval;
+        	if (!vbox._nearest) {
+        		var average_color = vbox.avg();
+        		var i, j, k, histoindex, distance, min_distance;
+        		for (i = vbox.r1; i <= vbox.r2; i++) {
+        			for (j = vbox.g1; j <= vbox.g2; j++) {
+        				for (k = vbox.b1; k <= vbox.b2; k++) {
+        					histoindex = getColorIndex(i, j, k);
+        					hval = histo[histoindex] || 0;
+        					if (hval > 0) {
+        						rval = mult*(i + 0.5);
+        						gval = mult*(j + 0.5);
+        						bval = mult*(k + 0.5);
+        						distance = Math.sqrt(Math.pow((rval - average_color[0]), 2),
+        											 Math.pow((gval - average_color[1]), 2),
+        											 Math.pow((bval - average_color[2]), 2));
+        						if (!min_distance || distance < min_distance) {
+        							closest_color = [rval, gval, bval];
+        							min_distance = distance;
+        						}
+        					}
+        				}
+        			}
+        		}
+        		vbox._nearest = closest_color;
+        	}
+        	return vbox._nearest;
+        },
         avg: function(force) {
             var vbox = this,
                 histo = vbox.histo;
@@ -205,11 +239,12 @@ var MMCQ = (function() {
         push: function(vbox) {
             this.vboxes.push({
                 vbox: vbox,
-                color: vbox.avg()
+                color: vbox.avg(),
+                representative: vbox.nearest()
             });
         },
         palette: function() {
-            return this.vboxes.map(function(vb) { return vb.color });
+            return this.vboxes.map(function(vb) { return vb.representative });
         },
         size: function() {
             return this.vboxes.size();

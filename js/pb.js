@@ -181,39 +181,45 @@ function loadImage(evt) {
 				// loop through the pixels in the image
 				imgData = ctx.getImageData(0, 0, img.width, img.height);
 				
-				var foundColor = [false, false, false, false, false, false, false, false];
+				var colorDists = [null, null, null, null, null, null, null, null];
 				paletteCircles = [];
 				var toFind = 8;
 				var numFound = 0;
 				for (var pxl = 0; pxl < imgData.data.length; pxl+=4) {
+					var img_rVal = imgData.data[pxl];
+					var img_gVal = imgData.data[pxl+1];
+					var img_bVal = imgData.data[pxl+2];
+				
 					// Does it match one of the 8 palette colors?
+					// only looking at the first 8 palette colors
+					// TODO: Make this a variable somewhere. bad hacker coder
 					for (var i=0; i<8; i++)
 					{
-						if (!foundColor[i])
+						var palette_rVal = palette[i][0];
+						var palette_gVal = palette[i][1];
+						var palette_bVal = palette[i][2];
+						
+						var distance = Math.sqrt(Math.pow(palette_rVal - img_rVal, 2) + 
+												 Math.pow(palette_gVal - img_gVal, 2) +
+												 Math.pow(palette_bVal - img_bVal, 2));
+						
+						if (!colorDists[i] || distance < colorDists[i])
 						{
-							// only looking at the first 8 palette colors
-							// TODO: Make this a variable somewhere. bad hacker coder
-							if (imgData.data[pxl] === palette[i][0] && imgData.data[pxl+1] === palette[i][1] 
-							&& imgData.data[pxl+2] === palette[i][2])
-							{
-								// if so, draw a circle, and mark it found (so we don't continue to look
-								//ctx.rect((pxl/4)%uiFrame.width, (pxl/4)/uiFrame.width, 5, 5);
-								var x = (pxl/4)%img.width; //(imgScale*img.width);
-								var y = (pxl/4)/img.width; //(imgScale*img.width);
-								var radius = 5;
-								paletteCircles[numFound] = {x: x, y: y, radius: radius + stroke, palette:i};
-								numFound++;								
-								foundColor[i] = true;
-								toFind--;
-							}
+							// if this is a better match, update the palette circle
+							//ctx.rect((pxl/4)%uiFrame.width, (pxl/4)/uiFrame.width, 5, 5);
+							var x = (pxl/4)%img.width; //(imgScale*img.width);
+							var y = (pxl/4)/img.width; //(imgScale*img.width);
+							var radius = 5;
+							paletteCircles[i] = {x: x, y: y, radius: radius + stroke, palette:i};							
+							colorDists[i] = distance;
 						}
-						if (toFind === 0)
-							break;
 					}
 				}
+				
+				
 				// alert if we didn't find the color, remove this for live
-				if (toFind != 0)
-					alert("We didn't find " + toFind + " colors.");
+				//if (toFind != 0)
+				//	alert("We didn't find " + toFind + " colors.");
 				// draw the circles
 				for (var i=0; i<paletteCircles.length; i++)
 				{
