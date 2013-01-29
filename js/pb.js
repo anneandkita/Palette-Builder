@@ -135,7 +135,7 @@ function reDraw() {
 		// draw each palette color in a 25x25 box along the top
 		// TODO: Get the palette to draw in the right place
         palettectx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
-        palettectx.fillRect(i*25, 0, 25, 25);
+        palettectx.fillRect(i*55, 0, 50, 100);
 	}
 }
 
@@ -261,7 +261,7 @@ function loadImage(evt) {
 					// draw each palette color in a 25x25 box along the top
 					// TODO: Get the palette to draw in the right place
                     palettectx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
-                    palettectx.fillRect(i*25, 0, 25, 25);
+                    palettectx.fillRect(i*55, 0, 50, 100);
 				}
 			}
 		
