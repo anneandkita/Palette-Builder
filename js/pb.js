@@ -6,8 +6,8 @@ var palette = [];
 var paletteCircles = [];
 var circleIndex = -1;
 var circledx, circledy;
-var ctx, imgScale;
-var img, uiFrame;
+var ctx, palettectx, imgScale;
+var img, uiFrame, paletteFrame;
 var stroke = 3;
 var imgData;
 var reDrawTimer;
@@ -19,11 +19,13 @@ function startApp() {
 	document.getElementById('imageUploadBrowse').addEventListener('change', loadImage, false);
 }
 
+// When the user clicks on our pretty button, trigger the actual ugly button for the file browser window
 function buttonClicked() {
 	// trigger browser window
 	$('#imageUploadBrowse').trigger('click');
 }
 
+// recursively find the offset x and y of our object going through all the objects it's nested inside of
 function getOffset(object, offset)
 {
 	if (!object)
@@ -35,22 +37,27 @@ function getOffset(object, offset)
 	getOffset(object.offsetParent, offset);
 }
 
+// which circle is the user clicking on if any?
 function findCircle(event) {
 	var x, y;
 	
+	// reset offset
 	totalOffset.x = totalOffset.y = 0;
 	
+	// calculate new offset 
+	// ANNE: Do we need this to be calculated every time? Test with scrolling
 	getOffset(uiFrame, totalOffset);
 	
     var x = event.pageX - totalOffset.x,
         y = event.pageY - totalOffset.y;
 
-    // Collision detection between clicked offset and a circle. Start from the top of the stack down in case
-    // there are more than one nearby
+    // Collision detection between clicked offset and a circle. Start from the top of the stack and 
+    // work down in case there are more than one nearby
     for (var i=(paletteCircles.length-1); i>=0; i--)
     {
     	var obj = paletteCircles[i];
     	
+    	// Doing a simple hitbox instead of an actual circle
         if (y > obj.y - obj.radius && y < obj.y + obj.radius 
             && x > obj.x - obj.radius && x < obj.x + obj.radius) {
             // Note which circle we're on, and store the difference between the center of the circle
@@ -58,15 +65,17 @@ function findCircle(event) {
             circleIndex = i;
             circledx = x - obj.x;
             circledy = y - obj.y;
+            // set up listeners for mouse movement and when to end movement (mouseup)
             uiFrame.addEventListener('mousemove', moveCircle);
             uiFrame.addEventListener('mouseup', stopMovement);
+            // setup redrawing of the circles so they animate as the mouse moves
 			redrawTimer = setInterval(reDraw, 20);
-            // TODO: update the palette with new color
         }
     }
 
 }
 
+// move the circle to where the mouse on mousemove
 function moveCircle(event) {
 	// figure out the new placement of the circle
 	paletteCircles[circleIndex].x = Math.round(event.pageX - totalOffset.x - circledx);
@@ -77,22 +86,26 @@ function moveCircle(event) {
 	var imgY = paletteCircles[circleIndex].y;
 	var imgX = paletteCircles[circleIndex].x;
 	var pixelNum = (imgY * img.width + imgX) * 4;
+
+	// update palette with new color under the circle
 	var paletteIdx = paletteCircles[circleIndex].palette;
 	palette[paletteIdx][0] = imgData.data[pixelNum];
 	palette[paletteIdx][1] = imgData.data[pixelNum+1];
 	palette[paletteIdx][2] = imgData.data[pixelNum+2];
 }
 
+// mouse button let up, stop moving the circle with the mouse
 function stopMovement(event) {
 	uiFrame.removeEventListener('mousemove', moveCircle);
 	uiFrame.removeEventListener('mouseup', stopMovement);
+	// stop animating the circles
+	// when this isn't here, the CPU fans start kicking in on my machine when I do a soak test.
 	clearInterval(redrawTimer);
 }
 
 // Redraw the screen at set intervals to support the movement of the circles
 function reDraw() {
 
-	// draw the image
 	// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 	ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
 	ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
@@ -116,12 +129,13 @@ function reDraw() {
 	// Now that we have the colors, let's draw them to the screen
 	// Do this after circling them, so that we don't circle the palette
 	// TODO: Move the palette to a different canvas
+    palettectx.clearRect(0, 0, paletteFrame.width, paletteFrame.height);
 	for (var i=0; i<8; i++)
 	{
 		// draw each palette color in a 25x25 box along the top
 		// TODO: Get the palette to draw in the right place
-		ctx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
-		ctx.fillRect(i*25, 0, 25, 25);
+        palettectx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
+        palettectx.fillRect(i*25, 0, 25, 25);
 	}
 }
 
@@ -137,6 +151,7 @@ function loadImage(evt) {
           // Render thumbnail
 		  	img = new Image();
 			uiFrame = document.getElementById('UIframe');
+            paletteFrame = document.getElementById('paletteFrame');
 			
 			// make the cursor not turn into an I-beam when we're moving circles around
 			uiFrame.onselectstart = function() { return false; } // ie
@@ -144,6 +159,7 @@ function loadImage(evt) {
 						
 			
 			ctx = uiFrame.getContext('2d');
+            palettectx = paletteFrame.getContext('2d');
 	
 			// load the image to the webpage
 			img.src = e.target.result;
@@ -244,8 +260,8 @@ function loadImage(evt) {
 				{
 					// draw each palette color in a 25x25 box along the top
 					// TODO: Get the palette to draw in the right place
-					ctx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
-					ctx.fillRect(i*25, 0, 25, 25);
+                    palettectx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + ","  + palette[i][2] + ")";
+                    palettectx.fillRect(i*25, 0, 25, 25);
 				}
 			}
 		
