@@ -8,17 +8,26 @@
     <script type="text/javascript" src="js/pb.js"></script>
     <script type="text/javascript" src="js/quantize.js"></script>
     <script type="text/javascript" src="js/colorutils.js"></script>
+    <?php
+    if($_POST['action'] === 'shareFlickr'){
+       // $result = addItemToCart($_POST['itemId']);
+        echo "sharing on flickr";
+    }
+?>
 </head>
 
 <body>
 <canvas id="UIframe" width=700 height=500>
 Your browser does not support this application. Please update your browser or try a different browser.
 </canvas>
-<canvas id="paletteFrame" width=700 height=100>
+<canvas id="paletteFrame" width=740 height=100>
 </canvas>
 <div class="imageFrame"></div><br /><br />
-<input id="imageUploadBrowse" type="file" accept="image/jpeg, image/jpg" style="position:absolute; top:-1000px;"/>
-<div class="button lime" style="position:absolute; top:300px; left:300px;">Load Image</div>
-</div>
+<input id="imageUploadBrowse" type="file" accept="image/jpeg, image/jpg, image/png" style="position:absolute; top:-1000px;"/>
+<div id="loadImage" class="button lime" style="position:absolute; top:300px; left:300px;">Load Image</div>
+<div id="shareImage" class="button orange">Share</div>
+<div id="saveImage" class="button orange">Save</div>
+<canvas id="combinedFrame" width=700 height=600 style="position:absolute; left:-1000px;"></canvas>
+
 </body>
 </html>
