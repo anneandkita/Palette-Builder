@@ -6,6 +6,7 @@ var palette = [];
 var paletteCircles = [];
 var newColorIcon;
 var newColorIconOffset = {x: 0, y: 0};
+var paletteSpacing = 5; // size of the padding between colors in the palette
 var circleIndex = -1;
 var circledx, circledy;
 var ctx, palettectx, imgScale;
@@ -19,6 +20,7 @@ var totalOffset = {x: 0, y: 0};
 var redrawTimer;
 var newIconShown = false;
 var combineFrame, combinectx, paletteImage;
+var newWindow;
 
 // Let us know when the user wants to load an image
 function startApp() {
@@ -42,26 +44,29 @@ function createImage() {
 }
 
 function popup(url) {
-    newwindow=window.open(url,'name','height=200,width=150');
-    if (window.focus) {newwindow.focus()}
+    newWindow=window.open('','popup','height=200,width=150');
+    if (window.focus) {newWindow.focus()}
     return false;
 }
 
 function shareImage() {
     //Flickr API stuff goes here
+    // Open pop-up immediately to minimize chances of pop-up blocker throwing a fit
+    var url = '../wp-includes/upload.php';
+    popup(url);
     createImage();
     paletteImage.onload = function () {
-        combinectx.drawImage(img, 0, 0, img.width*imgScale - newColorIcon.width, img.height*imgScale);
+        combinectx.clearRect(0, 0, combineFrame.width, combineFrame.height);
+        combinectx.drawImage(img, 0, 0, img.width*imgScale, img.height*imgScale);
         // draw the palette, but include a 5 pixel buffer between the image and the palette itself
         combinectx.drawImage(paletteImage, 0, img.height*imgScale + 5);
 
-        var url = '../wp-includes/upload.php',
-            data = combineFrame.toDataURL('image/png');
+        var data = combineFrame.toDataURL('image/png');
 
-  /*      var form = document.createElement("form");
+        var form = document.createElement("form");
         form.setAttribute("method", "post");
         form.setAttribute("action", url);
-        form.setAttribute("target", "_blank");
+        form.setAttribute("target", "popup");
 
         var hiddenField = document.createElement("input");
         hiddenField.setAttribute("type", "hidden");
@@ -72,15 +77,15 @@ function shareImage() {
 
         document.body.appendChild(form);
         form.submit();
-//        popup(url+"?base64data="+data);
-*/        $.ajax({
+       // popup(url+"?base64data="+data);
+/*        $.ajax({
             type: "POST",
             url: url,
             dataType: 'text',
             data: {
                 base64data : data
             }
-        });
+        }); */
     }
 }
 
@@ -235,11 +240,10 @@ function drawCircles() {
 }
 
 function drawPalette() {
-    newColorIcon = new Image();
-    var paletteSpacing = 5; // size of the padding between colors in the palette
     var colorWidth = ((imgData.width * imgScale) - (paletteSpacing*(paletteSize -1)))/paletteSize;
 
-    palettectx.clearRect(0, 0, paletteFrame.width, paletteFrame.height);
+    // Only clear the width of the top canvas, so we don't have to continually redraw the new color icon
+    palettectx.clearRect(0, 0, uiFrame.width, paletteFrame.height);
     for (var i=0; i<paletteSize; i++)
     {
         // draw each palette color to the palette canvas, spaced based on number of colors in the palette
@@ -250,18 +254,14 @@ function drawPalette() {
     // if we have less than the maximum allowed images, show the new palette color icon
     if (paletteSize < maxPaletteSize)
     {
-        newColorIcon.src = "../wp-includes/images/newicon.png";
-        newColorIcon.onload = function() {
-            newColorIconOffset.x = paletteSize*(paletteSpacing + colorWidth);
-            newColorIconOffset.y = 0;
-            palettectx.drawImage(newColorIcon, newColorIconOffset.x, newColorIconOffset.y);
-
             newIconShown = true;
-        }
+            newColorIcon.style.visibility='visible';
     }
     else
+    {
         newIconShown = false;
-
+        newColorIcon.style.visibility='hidden';
+    }
 }
 
 function loadImage(evt) {
@@ -288,8 +288,17 @@ function loadImage(evt) {
 			
 			ctx = uiFrame.getContext('2d');
             palettectx = paletteFrame.getContext('2d');
-	
-			// load the image to the webpage
+
+            // load new color icon
+            newColorIcon = new Image();
+            newColorIcon.src = "../wp-includes/images/newicon.png";
+            newColorIcon.onload = function() {
+               newColorIconOffset.x = uiFrame.width + paletteSpacing;
+               newColorIconOffset.y = 0;
+               palettectx.drawImage(newColorIcon, newColorIconOffset.x, newColorIconOffset.y);
+            }
+
+                  // load the image to the webpage
 			img.src = e.target.result;
 			img.onload = function () {
                 // We need to figure out if the image is too big to fit in the area it's being drawn to
