@@ -7,9 +7,10 @@ require_once('phpFlickr-3.1/phpFlickr.php');
 
 $data = $_POST['base64data'];
 set_time_limit(60);
-$image = explode('base64,',$data);
-file_put_contents('../temp/img.png', base64_decode($image[1]));
-
+if ($data) {
+    $image = explode('base64,',$data);
+    file_put_contents('../temp/img.png', base64_decode($image[1]));
+}
 
 // Create new phpFlickr object: new phpFlickr('[API Key]','[API Secret]')
 $flickr = new phpFlickr('449a47b49fd5569d38e6fc1f631e73bb','d68705c030f308ad', true);
@@ -22,7 +23,7 @@ if(empty($_GET['frob'])) {
 else {
     // Get the FROB token, refresh the page;  without a refresh, there will be "Invalid FROB" error
     $flickr->auth_getToken($_GET['frob']);
-    header('Location: flickr.php');
+    header('Location: upload.php');
     exit();
 }
 

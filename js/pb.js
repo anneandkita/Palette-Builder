@@ -3,14 +3,14 @@
 
 $(document).ready(startApp);
 var palette = [];
+var paletteDiv = [];
+var bufferDiv = [];
 var paletteCircles = [];
 var newColorIcon;
-var newColorIconOffset = {x: 0, y: 0};
-var paletteSpacing = 5; // size of the padding between colors in the palette
 var circleIndex = -1;
 var circledx, circledy;
-var ctx, palettectx, imgScale;
-var img, uiFrame, paletteFrame;
+var ctx, imgScale;
+var img, uiFrame;
 var stroke = 3;
 var defaultPaletteSize = 6;
 var paletteSize;
@@ -21,6 +21,10 @@ var redrawTimer;
 var newIconShown = false;
 var combineFrame, combinectx, paletteImage;
 var newWindow;
+var initialHeight;
+var initialWidth;
+var i;
+var paletteSpacing = 5;
 
 // Let us know when the user wants to load an image
 function startApp() {
@@ -33,6 +37,22 @@ function startApp() {
     var saveButton = $("#saveImage");
     saveButton.on("click", saveImage);
     saveButton.hide();
+
+    newColorIcon = $("#paletteUI");
+    newColorIcon.on ("click", addColor);
+    newColorIcon.hide();
+
+    uiFrame = document.getElementById('UIframe');
+    initialHeight = uiFrame.height;
+    initialWidth = uiFrame.width;
+    ctx = uiFrame.getContext('2d');
+
+    // load all the palette divs into the array
+    for (i=0; i<maxPaletteSize; i++)
+    {
+        paletteDiv[i] = document.getElementById('palette' + (i+1));
+        bufferDiv[i] = document.getElementById('buffer' + (i+1));
+    }
 }
 
 function createImage() {
@@ -116,32 +136,14 @@ function getOffset(object, offset)
 	getOffset(object.offsetParent, offset);
 }
 
-// code for figuring out where the user is clicking in the palette frame
-// and what we need to do about it if anything
-function paletteUI(event) {
-    // reset offset
-    totalOffset.x = totalOffset.y = 0;
-    getOffset(paletteFrame, totalOffset);
+function addColor() {
+    paletteSize++;
 
-    var x = event.pageX - totalOffset.x;
-    var y = event.pageY - totalOffset.y;
-
-    // Collision detection between clicked offset and the addcolor icon if visible
-    if (newIconShown)
+    if (paletteSize >= maxPaletteSize)
     {
-        if (y > newColorIconOffset.y && y < newColorIconOffset.y + newColorIcon.height
-            && x > newColorIconOffset.x && x < newColorIconOffset.x + newColorIcon.width) {
-
-            paletteSize++;
-
-            if (paletteSize >= maxPaletteSize)
-            {
-                newIconShown = false;
-            }
-            reDraw();
-        }
-
+        newColorIcon.hide();
     }
+    reDraw();
 }
 
 // which circle is the user clicking on if any?
@@ -158,7 +160,7 @@ function findCircle(event) {
 
     // Collision detection between clicked offset and a circle. Start from the top of the stack and 
     // work down in case there are more than one nearby
-    for (var i=(paletteCircles.length-1); i>=0; i--)
+    for (i=(paletteCircles.length-1); i>=0; i--)
     {
     	var obj = paletteCircles[i];
     	
@@ -222,7 +224,7 @@ function reDraw() {
 
 function drawCircles() {
     // draw the circles
-    for (var i=0; i<paletteSize; i++)
+    for (i=0; i<paletteSize; i++)
     {
         var paletteColorIdx = paletteCircles[i].palette;
         ctx.beginPath();
@@ -239,28 +241,33 @@ function drawCircles() {
 
 }
 
-function drawPalette() {
+function drawPalette(newImage) {
     var colorWidth = ((imgData.width * imgScale) - (paletteSpacing*(paletteSize -1)))/paletteSize;
 
-    // Only clear the width of the top canvas, so we don't have to continually redraw the new color icon
-    palettectx.clearRect(0, 0, uiFrame.width, paletteFrame.height);
-    for (var i=0; i<paletteSize; i++)
+    // update colors in the divs
+    for (i=0; i<paletteSize; i++)
     {
-        // draw each palette color to the palette canvas, spaced based on number of colors in the palette
-        palettectx.fillStyle = "rgb(" + palette[i][0] + "," + palette[i][1] + "," + palette[i][2] + ")";
-        palettectx.fillRect(i*(paletteSpacing + colorWidth), 0, colorWidth, 100);
+        paletteDiv[i].style.width = colorWidth + "px";
+        paletteDiv[i].style.backgroundColor = "rgb(" + palette[i][0] + "," + palette[i][1] + "," + palette[i][2] + ")";
+        bufferDiv[i].style.width = paletteSpacing + "px";
+    }
+
+    for (;i<maxPaletteSize; i++)
+    {
+        paletteDiv[i].style.width = "0px";
+        bufferDiv[i].style.width = "0px";
     }
 
     // if we have less than the maximum allowed images, show the new palette color icon
     if (paletteSize < maxPaletteSize)
     {
             newIconShown = true;
-            newColorIcon.style.visibility='visible';
+            newColorIcon.show();
     }
     else
     {
         newIconShown = false;
-        newColorIcon.style.visibility='hidden';
+        newColorIcon.hide();
     }
 }
 
@@ -274,33 +281,18 @@ function loadImage(evt) {
       // Closure to capture the file information.
       reader.onload = (function (imageFile) {
 	  	return function(e) {
-			var i;
-
           // Render thumbnail
 		  	img = new Image();
-			uiFrame = document.getElementById('UIframe');
-            paletteFrame = document.getElementById('paletteFrame');
-			
+
 			// make the cursor not turn into an I-beam when we're moving circles around
 			uiFrame.onselectstart = function() { return false; }; // ie
 			uiFrame.onmousedown = function() { return false; }; // mozilla
-						
-			
-			ctx = uiFrame.getContext('2d');
-            palettectx = paletteFrame.getContext('2d');
-
-            // load new color icon
-            newColorIcon = new Image();
-            newColorIcon.src = "../wp-includes/images/newicon.png";
-            newColorIcon.onload = function() {
-               newColorIconOffset.x = uiFrame.width + paletteSpacing;
-               newColorIconOffset.y = 0;
-               palettectx.drawImage(newColorIcon, newColorIconOffset.x, newColorIconOffset.y);
-            }
 
                   // load the image to the webpage
 			img.src = e.target.result;
 			img.onload = function () {
+                uiFrame.width = initialWidth;
+                uiFrame.height = initialHeight;
                 // We need to figure out if the image is too big to fit in the area it's being drawn to
                 // Figure out how much the width and height of the image would need to be scaled by to fit
                 // 1 or above means the image fits exactly or is smaller than the canvas area
@@ -317,14 +309,18 @@ function loadImage(evt) {
                 else {
                     imgScale = 1;
                 }
+
                 // check if the user is doing a mousedown over the image so we can see if they are
                 // clicking onto a palette circle
                 uiFrame.addEventListener('mousedown', findCircle);
-                paletteFrame.addEventListener('click', paletteUI);
+               // paletteFrame.addEventListener('click', paletteUI);
 
                 // draw the image using the scales we've calculate, or 1 if the image wasn't too big
                 // clear the canvas first so we're not drawing a bunch of images on top of each other
                 ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
+                // scale the uiFrame to match the picture
+                uiFrame.width = imgScale*img.width;
+                uiFrame.height = imgScale*img.height + paletteSpacing;
                 ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
 
                 // Get list of colors in the image (colorutils)

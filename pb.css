@@ -13,6 +13,23 @@ p {
 	font: 14px/100% Arial, Helvetica, sans-serif;
 }
 
+.palette {
+    width: 112px;
+    height: 100px;
+    float: left;
+}
+
+.buffer {
+    width: 5px;
+    height: 100px;
+    float: left;
+}
+.newcolor {
+    color: #ffffff !important;
+    font-style: oblique;
+    padding: 5px !important;
+}
+
 .button {
 	display: inline-block;
 	outline: none;
@@ -54,7 +71,7 @@ p {
 }
 
 .lime:hover {
-	background: b2f500;
+	background: #b2f500;
 	background: -webkit-gradient(linear, left top, left bottom, from(#d0ff52), to(#aaea00));
 	background: -moz-linear-gradient(top, #d0ff52, #aaea00);
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr:'#d0ff52', endColorstr='#aaea00');
