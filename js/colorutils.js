@@ -21,11 +21,11 @@ function get_colors (img, context, maxColors)
         a = imgData.data[i + 3];
 		
         // If pixel is mostly opaque
-        if (a >= 125) {
+      //  if (a >= 125) {
            // if (!(r > 250 && g > 250 && b > 250)) { // if we want white to be an available color, remove this line
                 pixelArray.push([r, g, b]);
           //  }
-        }
+    //    }
     }
 	
 	// Send array to quantize function which clusters values

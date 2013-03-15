@@ -5,19 +5,16 @@ $(document).ready(startApp);
 var palette = [];
 var paletteDiv = [];
 var bufferDiv = [];
+var circleDiv = [];
 var paletteCircles = [];
 var newColorIcon;
-var circleIndex = -1;
-var circledx, circledy;
 var ctx, imgScale;
-var img, uiFrame;
-var stroke = 3;
+var img, uiFrame, imgFrame;
 var defaultPaletteSize = 6;
 var paletteSize;
 var maxPaletteSize = 8;
 var imgData;
 var totalOffset = {x: 0, y: 0};
-var redrawTimer;
 var newIconShown = false;
 var combineFrame, combinectx, paletteImage;
 var newWindow;
@@ -50,6 +47,16 @@ function startApp() {
     // load all the palette divs into the array
     for (i=0; i<maxPaletteSize; i++)
     {
+        circleDiv[i] = document.getElementById('circle' + i);
+        circleDiv[i].style.display = 'none';
+        $("#circle"+i).draggable({
+            drag: moveCircle,
+            stop: function (event, ui) {
+                var circleID = this.id.substr(this.id.length-1);
+                paletteCircles[circleID].x = ui.position.left - img.offsetLeft + circleDiv[circleID].offsetWidth/2;
+                paletteCircles[circleID].y = ui.position.top - img.offsetTop + circleDiv[circleID].offsetWidth/2;
+            }
+        });
         paletteDiv[i] = document.getElementById('palette' + (i+1));
         bufferDiv[i] = document.getElementById('buffer' + (i+1));
     }
@@ -146,76 +153,32 @@ function addColor() {
     reDraw();
 }
 
-// which circle is the user clicking on if any?
-function findCircle(event) {
-
-	// reset offset
-	totalOffset.x = totalOffset.y = 0;
-	
-	// calculate new offset 
-	getOffset(uiFrame, totalOffset);
-
-    var x = event.pageX - totalOffset.x;
-    var y = event.pageY - totalOffset.y;
-
-    // Collision detection between clicked offset and a circle. Start from the top of the stack and 
-    // work down in case there are more than one nearby
-    for (i=(paletteCircles.length-1); i>=0; i--)
-    {
-    	var obj = paletteCircles[i];
-    	
-    	// Doing a simple hitbox instead of an actual circle
-        if (y > obj.y - obj.radius && y < obj.y + obj.radius 
-            && x > obj.x - obj.radius && x < obj.x + obj.radius) {
-            // Note which circle we're on, and store the difference between the center of the circle
-            // and the mouse x/y so it doesn't jump to where the mouse is.
-            circleIndex = i;
-            circledx = x - obj.x;
-            circledy = y - obj.y;
-            // set up listeners for mouse movement and when to end movement (mouseup)
-            uiFrame.addEventListener('mousemove', moveCircle);
-            uiFrame.addEventListener('mouseup', stopMovement);
-            // setup redrawing of the circles so they animate as the mouse moves
-			redrawTimer = setInterval(reDraw, 20);
-        }
-    }
-
-}
-
 // move the circle to where the mouse on mousemove
-function moveCircle(event) {
-	// figure out the new placement of the circle
-	paletteCircles[circleIndex].x = Math.round(event.pageX - totalOffset.x - circledx);
-	paletteCircles[circleIndex].y = Math.round(event.pageY - totalOffset.y - circledy);
-	
-	// figure out the pixel color found under the circle
-	// pixel # = (y * imgWidth + x) * 4 (since each pixel has 4 pieces of data)
-	var imgY = paletteCircles[circleIndex].y;
-	var imgX = paletteCircles[circleIndex].x;
-	var pixelNum = (imgY * img.width + imgX) * 4;
+function moveCircle(event, ui) {
+    // find current x,y of div
+    var circleID = this.id.substr(this.id.length-1);
+    var circleX = ui.position.left - img.offsetLeft + circleDiv[circleID].offsetWidth/2;
+    var circleY = ui.position.top - img.offsetTop + circleDiv[circleID].offsetWidth/2;
 
-	// update palette with new color under the circle
-	var paletteIdx = paletteCircles[circleIndex].palette;
-	palette[paletteIdx][0] = imgData.data[pixelNum];
-	palette[paletteIdx][1] = imgData.data[pixelNum+1];
-	palette[paletteIdx][2] = imgData.data[pixelNum+2];
-}
+    // figure out what color pixel the circle is over
+    var pixelNum = Math.round(circleY * img.width + circleX) * 4;
+    var color = "rgba(" + imgData.data[pixelNum] + "," + imgData.data[pixelNum+1] + "," + imgData.data[pixelNum+2] + ")";
 
-// mouse button let up, stop moving the circle with the mouse
-function stopMovement() {
-	uiFrame.removeEventListener('mousemove', moveCircle);
-	uiFrame.removeEventListener('mouseup', stopMovement);
-	// stop animating the circles
-	// when this isn't here, the CPU fans start kicking in on my machine when I do a soak test.
-	clearInterval(redrawTimer);
+    // change div background to the appropriate color
+    $(ui.helper).css({backgroundColor: color});
+    var paletteColorIdx = paletteCircles[circleID].palette;
+    palette[paletteColorIdx][0] = imgData.data[pixelNum];
+    palette[paletteColorIdx][1] = imgData.data[pixelNum+1];
+    palette[paletteColorIdx][2] = imgData.data[pixelNum+2];
+    $(paletteDiv[paletteColorIdx]).css({backgroundColor: color});
 }
 
 // Redraw the screen at set intervals to support the movement of the circles
 function reDraw() {
 
 	// draw the image using the scales we've calculate, or 1 if the image wasn't too big
-	ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
-	ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
+	//ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
+	//ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
 
     // draw the circles and palette
     drawCircles();
@@ -223,26 +186,30 @@ function reDraw() {
 }
 
 function drawCircles() {
+    // reset offset
+    totalOffset.x = totalOffset.y = 0;
+
+    // calculate new offset
+    getOffset(imgFrame, totalOffset);
+
     // draw the circles
     for (i=0; i<paletteSize; i++)
     {
         var paletteColorIdx = paletteCircles[i].palette;
-        ctx.beginPath();
-        ctx.arc(paletteCircles[i].x,paletteCircles[i].y,paletteCircles[i].radius-stroke,0,2*Math.PI,false);
-        ctx.fillStyle = "rgb(" + palette[paletteColorIdx][0] + "," + palette[paletteColorIdx][1] + ","  + palette[paletteColorIdx][2] + ")";
-        ctx.fill();
-        ctx.strokeStyle="#000000";
-        ctx.lineWidth=stroke+1;
-        ctx.stroke();
-        ctx.strokeStyle="#FFFFFF";
-        ctx.lineWidth=stroke;
-        ctx.stroke();
+        circleDiv[i].style.display = 'inline';
+        circleDiv[i].style.left = (imgFrame.offsetLeft + paletteCircles[i].x - circleDiv[i].offsetWidth/2) + "px";
+        circleDiv[i].style.top = (imgFrame.offsetTop + paletteCircles[i].y - circleDiv[i].offsetHeight/2) + "px";
+        circleDiv[i].style.backgroundColor = "rgb(" + palette[paletteColorIdx][0] + "," + palette[paletteColorIdx][1] + ","  + palette[paletteColorIdx][2] + ")";
     }
 
+    for (; i<maxPaletteSize; i++)
+    {
+        circleDiv[i].style.display = 'none';
+    }
 }
 
-function drawPalette(newImage) {
-    var colorWidth = ((imgData.width * imgScale) - (paletteSpacing*(paletteSize -1)))/paletteSize;
+function drawPalette() {
+    var colorWidth = ((uiFrame.width) - (paletteSpacing*(paletteSize -1)))/paletteSize;
 
     // update colors in the divs
     for (i=0; i<paletteSize; i++)
@@ -272,10 +239,10 @@ function drawPalette(newImage) {
 }
 
 function loadImage(evt) {
-    // load image
+      // load image
       var reader = new FileReader();
       var imageFile = evt.target.files[0]; // File object
-
+      imgFrame = document.getElementById('imgFrame');
       paletteSize = defaultPaletteSize;
 
       // Closure to capture the file information.
@@ -312,16 +279,24 @@ function loadImage(evt) {
 
                 // check if the user is doing a mousedown over the image so we can see if they are
                 // clicking onto a palette circle
-                uiFrame.addEventListener('mousedown', findCircle);
+//                uiFrame.addEventListener('mousedown', findCircle);
                // paletteFrame.addEventListener('click', paletteUI);
 
                 // draw the image using the scales we've calculate, or 1 if the image wasn't too big
                 // clear the canvas first so we're not drawing a bunch of images on top of each other
                 ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
+                if (imgFrame.lastChild)
+                    imgFrame.removeChild(imgFrame.lastChild);
+
                 // scale the uiFrame to match the picture
-                uiFrame.width = imgScale*img.width;
-                uiFrame.height = imgScale*img.height + paletteSpacing;
-                ctx.drawImage(img, 0, 0, imgScale * img.width, imgScale * img.height);
+                img.width = imgScale * img.width;
+                img.height = imgScale * img.height;
+                uiFrame.width = img.width;
+                uiFrame.height = img.height + paletteSpacing;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                img.style.cssText = 'height:' + img.height + "px !important;" + 'width:' + img.width + "px !important;";
+
+                imgFrame.appendChild(img);
 
                 // Get list of colors in the image (colorutils)
                 palette = get_colors(img, ctx);
@@ -353,7 +328,7 @@ function loadImage(evt) {
                             var x = (pxl / 4) % img.width; //(imgScale*img.width);
                             var y = (pxl / 4) / img.width; //(imgScale*img.width);
                             var radius = 5;
-                            paletteCircles[i] = {x:x, y:y, radius:radius + stroke, palette:i};
+                            paletteCircles[i] = {x:x, y:y, palette:i};
                             colorDists[i] = distance;
                         }
                     }

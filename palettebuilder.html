@@ -5,6 +5,7 @@
     <title>Palette Builder v2.0</title>
     <link href="pb.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="js/jquery-1.8.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.10.1.custom.js"></script>
     <script type="text/javascript" src="js/pb.js"></script>
     <script type="text/javascript" src="js/quantize.js"></script>
     <script type="text/javascript" src="js/colorutils.js"></script>
@@ -17,9 +18,20 @@
 </head>
 
 <body>
-<canvas id="UIframe" width=700 height=500>
+<canvas id="UIframe" class="uiCanvas" width=700 height=500>
 Your browser does not support this application. Please update your browser or try a different browser.
 </canvas>
+<div id="imgFrame"></div>
+<div id="paletteCircles">
+    <div id="circle0" class="circle"></div>
+    <div id="circle1" class="circle"></div>
+    <div id="circle2" class="circle"></div>
+    <div id="circle3" class="circle"></div>
+    <div id="circle4" class="circle"></div>
+    <div id="circle5" class="circle"></div>
+    <div id="circle6" class="circle"></div>
+    <div id="circle7" class="circle"></div>
+</div>
 <div id="paletteFrame" style="width:740px; height:105px">
     <div id="palette1" class="palette"></div>
     <div id="buffer1" class="buffer"></div>
@@ -41,7 +53,7 @@ Your browser does not support this application. Please update your browser or tr
     <div style="clear:both"></div>
 </div>
 <input id="imageUploadBrowse" type="file" accept="image/jpeg, image/jpg, image/png" style="position:absolute; top:-1000px;"/>
-<div id="loadImage" class="button lime" style="position:absolute; top:300px; left:300px;">Load Image</div>
+<div id="loadImage" class="button lime" style="top:300px; left:300px;">Load Image</div>
 <div id="shareImage" class="button orange">Share</div>
 <div id="saveImage" class="button orange">Save</div>
 <canvas id="combinedFrame" width=700 height=600 style="position:absolute; left:-1000px;"></canvas>

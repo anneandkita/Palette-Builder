@@ -30,6 +30,28 @@ p {
     padding: 5px !important;
 }
 
+.uiCanvas {
+    position: absolute;
+    top: -5000px;
+}
+
+img {
+    max-width: none !important;
+}
+
+.circle {
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    border: 3px solid white;
+    -moz-box-shadow: 0 0 5px 5px rgba(0,0,0,.4);
+    -webkit-box-shadow: 0 0 5px 5px rgba(0,0,0,.4);
+    box-shadow: 0 0 1px rgba(0,0,0,.4);
+    position: absolute;
+}
+
 .button {
 	display: inline-block;
 	outline: none;
