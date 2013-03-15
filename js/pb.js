@@ -50,6 +50,7 @@ function startApp() {
         circleDiv[i] = document.getElementById('circle' + i);
         circleDiv[i].style.display = 'none';
         $("#circle"+i).draggable({
+            containment: "#imgFrame",
             drag: moveCircle,
             stop: function (event, ui) {
                 var circleID = this.id.substr(this.id.length-1);
@@ -297,6 +298,8 @@ function loadImage(evt) {
                 img.style.cssText = 'height:' + img.height + "px !important;" + 'width:' + img.width + "px !important;";
 
                 imgFrame.appendChild(img);
+                imgFrame.style.width = uiFrame.width + "px";
+                imgFrame.style.height = uiFrame.height + "px";
 
                 // Get list of colors in the image (colorutils)
                 palette = get_colors(img, ctx);

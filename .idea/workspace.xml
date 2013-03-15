@@ -2,17 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f9a58bad-d656-41d3-ac77-b35b44342799" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/colorutils.js" afterPath="$PROJECT_DIR$/js/colorutils.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/palettebuilder.html" afterPath="$PROJECT_DIR$/palettebuilder.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pb.css" afterPath="$PROJECT_DIR$/pb.css" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/pb.js" afterPath="$PROJECT_DIR$/js/pb.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Palette Builder.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/Dummy.txt" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1362612116044" ignored="false" />
-    <file path="/pb.js" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1363306288981" ignored="false" />
-    <file path="/palettebuilder.html" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1363119603279" ignored="false" />
+    <file path="/pb.js" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1363308681735" ignored="false" />
+    <file path="/palettebuilder.html" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1363308227467" ignored="false" />
     <file path="/pb.css" changelist="f9a58bad-d656-41d3-ac77-b35b44342799" time="1363293194804" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -36,8 +34,9 @@
       <file leaf-file-name="palettebuilder.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/palettebuilder.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="55" column="47" selection-start="2517" selection-end="2517" vertical-scroll-proportion="-16.875">
+            <state line="27" column="43" selection-start="1253" selection-end="1253" vertical-scroll-proportion="0.625">
               <folding>
+                <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -50,7 +49,7 @@
       <file leaf-file-name="pb.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pb.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="39" column="0" selection-start="488" selection-end="488" vertical-scroll-proportion="0.0">
+            <state line="33" column="19" selection-start="424" selection-end="424" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -68,7 +67,7 @@
       <file leaf-file-name="pb.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/pb.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="308" column="30" selection-start="11257" selection-end="11271" vertical-scroll-proportion="0.33333334">
+            <state line="298" column="0" selection-start="10835" selection-end="10835" vertical-scroll-proportion="0.2820513">
               <folding>
                 <element signature="n#!!doc" expanded="true" />
               </folding>
@@ -107,8 +106,8 @@
         <option value="$PROJECT_DIR$/upload.php" />
         <option value="$PROJECT_DIR$/js/colorutils.js" />
         <option value="$PROJECT_DIR$/pb.css" />
-        <option value="$PROJECT_DIR$/js/pb.js" />
         <option value="$PROJECT_DIR$/palettebuilder.html" />
+        <option value="$PROJECT_DIR$/js/pb.js" />
       </list>
     </option>
   </component>
@@ -395,6 +394,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state line="22" column="35" selection-start="949" selection-end="949" vertical-scroll-proportion="0.0">
           <folding>
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -423,6 +423,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state line="16" column="43" selection-start="807" selection-end="807" vertical-scroll-proportion="0.0">
           <folding>
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -444,6 +445,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state line="20" column="10" selection-start="990" selection-end="990" vertical-scroll-proportion="0.0">
           <folding>
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -465,6 +467,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state line="18" column="0" selection-start="764" selection-end="822" vertical-scroll-proportion="0.0">
           <folding>
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -505,15 +508,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pb.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="39" column="0" selection-start="488" selection-end="488" vertical-scroll-proportion="0.0">
+        <state line="33" column="19" selection-start="424" selection-end="424" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/palettebuilder.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="55" column="47" selection-start="2517" selection-end="2517" vertical-scroll-proportion="-16.875">
+        <state line="27" column="43" selection-start="1253" selection-end="1253" vertical-scroll-proportion="0.625">
           <folding>
+            <element signature="n#style#0;n#div#0;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#17;n#div#2;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -524,7 +528,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/pb.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="308" column="30" selection-start="11257" selection-end="11271" vertical-scroll-proportion="0.33333334">
+        <state line="298" column="0" selection-start="10835" selection-end="10835" vertical-scroll-proportion="0.2820513">
           <folding>
             <element signature="n#!!doc" expanded="true" />
           </folding>
