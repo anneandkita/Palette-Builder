@@ -16,7 +16,6 @@ var maxPaletteSize = 8;
 var imgData;
 var totalOffset = {x: 0, y: 0};
 var newIconShown = false;
-var combineFrame, combinectx, paletteImage;
 var newWindow;
 var initialHeight;
 var initialWidth;
@@ -64,11 +63,16 @@ function startApp() {
 }
 
 function createImage() {
-    // combine the image and the palette into one canvas for saving leaving off the palette circles
-    combineFrame = document.getElementById('combinedFrame');
-    combinectx = combineFrame.getContext("2d");
-    paletteImage = new Image();
-    paletteImage.src = paletteFrame.toDataURL("image/png");
+    // draw the palette into the canvas
+    for (i=0; i<paletteSize; i++)
+    {
+        ctx.fillStyle = paletteDiv[i].style.backgroundColor;
+        var rx = i * (paletteDiv[i].offsetWidth + bufferDiv[i].offsetWidth);
+        var ry = uiFrame.height - paletteDiv[i].offsetHeight;
+        var rw = paletteDiv[i].offsetWidth;
+        var rh = paletteDiv[i].offsetHeight;
+        ctx.fillRect(rx, ry, rw, rh);
+    }
 }
 
 function popup(url) {
@@ -83,28 +87,22 @@ function shareImage() {
     var url = '../wp-includes/upload.php';
     popup(url);
     createImage();
-    paletteImage.onload = function () {
-        combinectx.clearRect(0, 0, combineFrame.width, combineFrame.height);
-        combinectx.drawImage(img, 0, 0, img.width*imgScale, img.height*imgScale);
-        // draw the palette, but include a 5 pixel buffer between the image and the palette itself
-        combinectx.drawImage(paletteImage, 0, img.height*imgScale + 5);
+    var data = uiFrame.toDataURL('image/png');
 
-        var data = combineFrame.toDataURL('image/png');
+    var form = document.createElement("form");
+    form.setAttribute("method", "post");
+    form.setAttribute("action", url);
+    form.setAttribute("target", "popup");
 
-        var form = document.createElement("form");
-        form.setAttribute("method", "post");
-        form.setAttribute("action", url);
-        form.setAttribute("target", "popup");
+    var hiddenField = document.createElement("input");
+    hiddenField.setAttribute("type", "hidden");
+    hiddenField.setAttribute("name", "base64data");
+    hiddenField.setAttribute("value", data);
 
-        var hiddenField = document.createElement("input");
-        hiddenField.setAttribute("type", "hidden");
-        hiddenField.setAttribute("name", "base64data");
-        hiddenField.setAttribute("value", data);
+    form.appendChild(hiddenField);
 
-        form.appendChild(hiddenField);
-
-        document.body.appendChild(form);
-        form.submit();
+    document.body.appendChild(form);
+    form.submit();
        // popup(url+"?base64data="+data);
 /*        $.ajax({
             type: "POST",
@@ -114,16 +112,11 @@ function shareImage() {
                 base64data : data
             }
         }); */
-    }
 }
 
 function saveImage() {
     createImage();
-    paletteImage.onload = function () {
-        combinectx.drawImage(img, 0, 0, img.width*imgScale, img.height*imgScale);
-        combinectx.drawImage(paletteImage, 0, img.height*imgScale + 5);
-        window.location = combineFrame.toDataURL('image/png');
-    }
+    window.location = uiFrame.toDataURL('image/png');
 }
 
 // When the user clicks on our pretty button, trigger the actual ugly button for the file browser window
@@ -168,9 +161,9 @@ function moveCircle(event, ui) {
     // change div background to the appropriate color
     $(ui.helper).css({backgroundColor: color});
     var paletteColorIdx = paletteCircles[circleID].palette;
-    palette[paletteColorIdx][0] = imgData.data[pixelNum];
-    palette[paletteColorIdx][1] = imgData.data[pixelNum+1];
-    palette[paletteColorIdx][2] = imgData.data[pixelNum+2];
+    palette[paletteColorIdx].r = imgData.data[pixelNum];
+    palette[paletteColorIdx].g = imgData.data[pixelNum+1];
+    palette[paletteColorIdx].b = imgData.data[pixelNum+2];
     $(paletteDiv[paletteColorIdx]).css({backgroundColor: color});
 }
 
@@ -200,7 +193,7 @@ function drawCircles() {
         circleDiv[i].style.display = 'inline';
         circleDiv[i].style.left = (imgFrame.offsetLeft + paletteCircles[i].x - circleDiv[i].offsetWidth/2) + "px";
         circleDiv[i].style.top = (imgFrame.offsetTop + paletteCircles[i].y - circleDiv[i].offsetHeight/2) + "px";
-        circleDiv[i].style.backgroundColor = "rgb(" + palette[paletteColorIdx][0] + "," + palette[paletteColorIdx][1] + ","  + palette[paletteColorIdx][2] + ")";
+        circleDiv[i].style.backgroundColor = "rgb(" + palette[paletteColorIdx].r + "," + palette[paletteColorIdx].g + ","  + palette[paletteColorIdx].b + ")";
     }
 
     for (; i<maxPaletteSize; i++)
@@ -210,13 +203,13 @@ function drawCircles() {
 }
 
 function drawPalette() {
-    var colorWidth = ((uiFrame.width) - (paletteSpacing*(paletteSize -1)))/paletteSize;
+    var colorWidth = Math.round(((uiFrame.width) - (paletteSpacing*(paletteSize -1)))/paletteSize);
 
     // update colors in the divs
     for (i=0; i<paletteSize; i++)
     {
         paletteDiv[i].style.width = colorWidth + "px";
-        paletteDiv[i].style.backgroundColor = "rgb(" + palette[i][0] + "," + palette[i][1] + "," + palette[i][2] + ")";
+        paletteDiv[i].style.backgroundColor = "rgb(" + palette[i].r + "," + palette[i].g + "," + palette[i].b + ")";
         bufferDiv[i].style.width = paletteSpacing + "px";
     }
 
@@ -293,13 +286,15 @@ function loadImage(evt) {
                 img.width = imgScale * img.width;
                 img.height = imgScale * img.height;
                 uiFrame.width = img.width;
-                uiFrame.height = img.height + paletteSpacing;
+                // we add the height of the palette here because when we save the image, we draw the palette into this canvas
+                // resizing it later causes it to clear the canvas which means we would have to redraw the image as well
+                uiFrame.height = img.height + paletteSpacing + paletteDiv[0].offsetHeight;
                 ctx.drawImage(img, 0, 0, img.width, img.height);
                 img.style.cssText = 'height:' + img.height + "px !important;" + 'width:' + img.width + "px !important;";
 
+                imgFrame.style.width = img.width + "px";
+                imgFrame.style.height = img.height + paletteSpacing + "px";
                 imgFrame.appendChild(img);
-                imgFrame.style.width = uiFrame.width + "px";
-                imgFrame.style.height = uiFrame.height + "px";
 
                 // Get list of colors in the image (colorutils)
                 palette = get_colors(img, ctx);
@@ -308,6 +303,8 @@ function loadImage(evt) {
                 // loop through the pixels in the image
                 imgData = ctx.getImageData(0, 0, img.width, img.height);
 
+                maxPaletteSize = Math.min(8, palette.length);
+                paletteSize = Math.min (paletteSize, palette.length);
                 var colorDists = [null, null, null, null, null, null, null, null];
                 paletteCircles = [];
                 for (var pxl = 0; pxl < imgData.data.length; pxl += 4) {
@@ -317,9 +314,9 @@ function loadImage(evt) {
 
                     // only looking at the first few palette colors
                     for (i = 0; i < maxPaletteSize; i++) {
-                        var palette_rVal = palette[i][0];
-                        var palette_gVal = palette[i][1];
-                        var palette_bVal = palette[i][2];
+                        var palette_rVal = palette[i].r;
+                        var palette_gVal = palette[i].g;
+                        var palette_bVal = palette[i].b;
 
                         var distance = Math.sqrt(Math.pow(palette_rVal - img_rVal, 2) +
                             Math.pow(palette_gVal - img_gVal, 2) +
