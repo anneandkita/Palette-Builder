@@ -214,10 +214,40 @@ function getOffset(object, offset)
 function addColor() {
 	paletteSize++;
 
-	if (paletteSize >= maxPaletteSize)
+	// can't have palettes bigger than 8, and can't add colors past the length of the master palette
+	if (paletteSize >= maxPaletteSize || paletteSize >= palette.length)
 	{
 		newColorIcon.hide();
 	}
+	
+	// figure out location for new circle
+	var newCircleID = paletteSize-1;
+	var colorDist = null;
+	
+	for (var pxl = 0; pxl < imgData.data.length; pxl += 4) {
+		var img_rVal = imgData.data[pxl];
+		var img_gVal = imgData.data[pxl + 1];
+		var img_bVal = imgData.data[pxl + 2];
+
+		var palette_rVal = palette[newCircleID].r;
+		var palette_gVal = palette[newCircleID].g;
+		var palette_bVal = palette[newCircleID].b;
+
+			var distance = Math.sqrt(Math.pow(palette_rVal - img_rVal, 2) +
+			   Math.pow(palette_gVal - img_gVal, 2) +
+			   Math.pow(palette_bVal - img_bVal, 2));
+
+			if (!colorDist || distance < colorDist) {
+				// if this is a better match, update the palette circle
+				//ctx.rect((pxl/4)%uiFrame.width, (pxl/4)/uiFrame.width, 5, 5);
+				var x = (pxl / 4) % img.width; //(imgScale*img.width);
+				var y = (pxl / 4) / img.width; //(imgScale*img.width);
+				paletteCircles[newCircleID] = {x:x, y:y};
+				colorDist = distance;                    
+			}
+	 	}
+	
+	
 	reDraw();
 }
 
@@ -394,7 +424,7 @@ function loadImage(evt) {
 					 var img_bVal = imgData.data[pxl + 2];
 
 					 // only looking at the first few palette colors
-					 for (i = 0; i < maxPaletteSize; i++) {
+					 for (i = 0; i < paletteSize; i++) {
 						var palette_rVal = palette[i].r;
 						var palette_gVal = palette[i].g;
 						var palette_bVal = palette[i].b;
@@ -408,8 +438,7 @@ function loadImage(evt) {
 							//ctx.rect((pxl/4)%uiFrame.width, (pxl/4)/uiFrame.width, 5, 5);
 							var x = (pxl / 4) % img.width; //(imgScale*img.width);
 							var y = (pxl / 4) / img.width; //(imgScale*img.width);
-							var radius = 5;
-							paletteCircles[i] = {x:x, y:y, palette:i};
+							paletteCircles[i] = {x:x, y:y};
 							colorDists[i] = distance;                    
 						}
 				 	}
