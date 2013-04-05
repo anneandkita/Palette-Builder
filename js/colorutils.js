@@ -90,7 +90,6 @@ function get_colors (img, context, maxColors)
 	
     var pixelArray = [];
 
-    // TODO: reduce number of colors in image
     for (var i = 0, red, green, blue, alpha; i < imgData.data.length; i+=4) {
         red = reduce(imgData.data[i]);
         green = reduce(imgData.data[i + 1]);

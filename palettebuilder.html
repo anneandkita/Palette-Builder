@@ -21,7 +21,7 @@
 <canvas id="UIframe" class="uiCanvas" width=700 height=500>
 Your browser does not support this application. Please update your browser or try a different browser.
 </canvas>
-<div id="imgFrame" style="width:700px; height:500px;"></div>
+<div id="imgFrame" style="width:700px; height:300px;"></div>
 <div id="paletteCircles">
     <div id="circle0" class="circle"></div>
     <div id="circle1" class="circle"></div>
@@ -32,31 +32,16 @@ Your browser does not support this application. Please update your browser or tr
     <div id="circle6" class="circle"></div>
     <div id="circle7" class="circle"></div>
 </div>
-<div id="paletteFrame" style="width:740px; height:105px">
-    <div id="palette1" class="palette"></div>
-    <div id="buffer1" class="buffer"></div>
-    <div id="palette2" class="palette"></div>
-    <div id="buffer2" class="buffer"></div>
-    <div id="palette3" class="palette"></div>
-    <div id="buffer3" class="buffer"></div>
-    <div id="palette4" class="palette"></div>
-    <div id="buffer4" class="buffer"></div>
-    <div id="palette5" class="palette"></div>
-    <div id="buffer5" class="buffer"></div>
-    <div id="palette6" class="palette"></div>
-    <div id="buffer6" class="buffer"></div>
-    <div id="palette7" class="palette"></div>
-    <div id="buffer7" class="buffer"></div>
-    <div id="palette8" class="palette"></div>
-    <div id="buffer8" class="buffer"></div>
-    <div id="paletteUI" class="button lime newcolor"><strong>+</strong></div>
-    <div style="clear:both"></div>
+<div id="paletteFrame" style="width: 740px; height: 105px;">
+	<div id="paletteCircles"></div>
+	<div id="paletteUI">
+		<div id="newColor" class="button lime newcolor"><img src="/blog/wp-includes/images/plus.png"></div>
+	</div>
 </div>
-<input id="imageUploadBrowse" type="file" accept="image/jpeg, image/jpg, image/png" style="position:absolute; top:-1000px;"/>
-<div id="loadImage" class="button lime" style="top:300px; left:300px;">Load Image</div>
-<div id="shareImage" class="button orange">Share</div>
-<div id="saveImage" class="button orange">Save</div>
-<canvas id="combinedFrame" width=700 height=600 style="position:absolute; left:-1000px;"></canvas>
-
+<div style="clear: both;"></div>
+<input id="imageUploadBrowse" style="position: absolute; top: -1000px;" type="file" accept="image/jpeg, image/jpg, image/png" />
+<div class="button lime" id="loadImage" style="position: absolute; top: 300px; left: 300px;">Load Image</div>
+<div class="button orange" id="shareImage">Share</div>
+<div class="button orange" id="saveImage">Save</div>
 </body>
 </html>
