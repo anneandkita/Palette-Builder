@@ -14,6 +14,7 @@ var newColorIcon;
 var ctx, imgScale;
 var img, uiFrame, imgFrame;
 var defaultPaletteSize = 6;
+var initialPaletteSize = 0;
 var paletteSize;
 var maxPaletteSize = 8;
 var imgData;
@@ -103,6 +104,15 @@ function startApp() {
 	$("#paletteUI").append($newDiv);
 	$("#resetButton").on("click", resetPalette);
 	$("#resetButton").hide();
+	
+	// create the flickr share dialog
+	var $newDiv = $("<div/>")
+					.attr("id", "flickrShare")
+					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" name="description">Created with Play Crafts Palette Builder.</textarea></form></div>');
+	$("#paletteUI").append($newDiv);
+	$("#flickrShare").dialog({ width: 600, resizable: false, modal: true, position: 'center', closeText: 'x', title: 'Share to flickr', autoOpen: false,
+	         buttons: { "Cancel": function() { $(this).dialog("close"); }, "Share": flickrShare } 
+	         });
 }
 
 function remColor() {
@@ -126,7 +136,7 @@ function remColor() {
 
 function resetPalette() {
 	// Change to default number of colors
-	paletteSize = defaultPaletteSize;
+	paletteSize = initialPaletteSize;
 	// Reset palette colors to initial colors
 	// using slice because it returns a copy of the array
 	palette = clone(initialPalette);
@@ -150,7 +160,12 @@ function createImage() {
 }
 
 function popup(url) {
-	newWindow=window.open('','popup','height=200,width=150');
+	var width = 500;
+	var height = 400;
+	var left = (screen.width/2)-(width/2);
+	var top = (screen.height/2)-(height/2);
+	newWindow = window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
+
 	if (window.focus) {newWindow.focus()}
 	return false;
 }
@@ -158,11 +173,35 @@ function popup(url) {
 function shareImage() {
 	//Flickr API stuff goes here
 	// Open pop-up immediately to minimize chances of pop-up blocker throwing a fit
-	var url = '../wp-includes/upload.php';
-	popup(url);
+	$('#flickrShare').dialog("open");
+	
+	//popup(url);
 	createImage();
-	var data = uiFrame.toDataURL('image/png');
+	var flickrCtx = document.getElementById("flickrImg").getContext('2d');
+	flickrCtx.clearRect(0, 0, $('#flickrImg').width(), $('#flickrImg').height());
+	var widthScale = $('#flickrImg').width() / uiFrame.width;
+	var heightScale = $('#flickrImg').height() / uiFrame.height;
+	var flickrScale = 1;
+	
+	// if the scale factor is less than 1 for either width or height, the image is bigger than the area it's going
+	// to be drawn to
+	if (widthScale < 1 || heightScale < 1) {
+		// Take the smallest number and scale the image by that, guaranteeing that both the width and height will
+		// fit in the area it's going to be drawn to, and the proportions will be constrained
+		flickrScale = Math.min(widthScale, heightScale);
+	}
+	else {
+		flickrScale = 1;
+	}
+	
+	flickrCtx.drawImage(uiFrame, 0, 0, flickrScale * uiFrame.width, flickrScale * uiFrame.height);
+}
 
+function flickrShare() {
+	var data = uiFrame.toDataURL('image/png');
+	var url = '../wp-includes/upload.php';
+	
+	popup('about:blank');
 	var form = document.createElement("form");
 	form.setAttribute("method", "post");
 	form.setAttribute("action", url);
@@ -175,16 +214,81 @@ function shareImage() {
 
 	form.appendChild(hiddenField);
 
+	hiddenField = document.createElement("input");
+	hiddenField.setAttribute("type", "hidden");
+	hiddenField.setAttribute("name", "title");
+	hiddenField.setAttribute("value", $("#title").val());
+	
+	form.appendChild(hiddenField);
+	
+	hiddenField = document.createElement("input");
+	hiddenField.setAttribute("type", "hidden");
+	hiddenField.setAttribute("name", "description");
+	hiddenField.setAttribute("value", $("#description").val());
+	
+	form.appendChild(hiddenField);
+	
 	document.body.appendChild(form);
 	form.submit();
+	
 	   // popup(url+"?base64data="+data);
 /*        $.ajax({
 			type: "POST",
 			url: url,
 			dataType: 'text',
 			data: {
+				auth : "false",
+				title : $("input#title").val(),
+				description: $("textarea#description").val(),
 				base64data : data
-			}
+			},
+			success: function (result) {
+//				if (result > -1)
+			    	$('#flickrForm').html("Your palette was successfully shared to Flickr!"); 
+			    else {
+			    	// need to authenticate
+			    	$('#flickrForm').html("You need to authenticate or login with Flickr.");
+			    	// doing a form because just putting everything on the URL creates a URL that is too long. yay.
+			    	// can't use AJAX because we need the user to do some stuff over on flickr
+			    	// there has got to be a better way to do this, but I don't know what it is
+					var form = document.createElement("form");
+					form.setAttribute("method", "post");
+					form.setAttribute("action", url);
+					form.setAttribute("target", "popup");
+				
+					var hiddenField = document.createElement("input");
+					hiddenField.setAttribute("type", "hidden");
+					hiddenField.setAttribute("name", "base64data");
+					hiddenField.setAttribute("value", data);
+				
+					form.appendChild(hiddenField);
+				
+					hiddenField = document.createElement("input");
+					hiddenField.setAttribute("type", "hidden");
+					hiddenField.setAttribute("name", "title");
+					hiddenField.setAttribute("value", $("#title").val());
+					
+					form.appendChild(hiddenField);
+					
+					hiddenField = document.createElement("textarea");
+					hiddenField.setAttribute("type", "hidden");
+					hiddenField.setAttribute("name", "description");
+					hiddenField.setAttribute("value", $("#description").val());
+					
+					form.appendChild(hiddenField);
+					
+					hiddenField = document.createElement("input");
+					hiddenField.setAttribute("type", "hidden");
+					hiddenField.setAttribute("name", "auth");
+					hiddenField.setAttribute("value", "true");
+					
+					form.appendChild(hiddenField);
+				
+					document.body.appendChild(form);
+			    	form.submit();
+			    } 
+			    
+			} 
 		}); */
 }
 
@@ -409,12 +513,12 @@ function loadImage(evt) {
 				palette = get_colors(img, ctx);
 				// get a copy of the palette in case we need to reset
 				initialPalette = clone(palette);
+				initialPaletteSize = Math.min(palette.length, defaultPaletteSize);
 
 				// Draw circles around each of the colors in the palette
 				// loop through the pixels in the image
 				imgData = ctx.getImageData(0, 0, img.width, img.height);
 
-				maxPaletteSize = Math.min(8, palette.length);
 				paletteSize = Math.min (paletteSize, palette.length);
 				var colorDists = [null, null, null, null, null, null, null, null];
 				paletteCircles = [];

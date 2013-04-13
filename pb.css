@@ -83,6 +83,19 @@ img {
 	top: 1px;
 }
 
+label {
+	float: left;
+	text-align: right;
+	margin-right: 5px;
+	margin-left: 15px;
+	width: 50px;
+}
+
+input, textarea {
+	width: 300px;
+	margin-left: 0px;
+}
+
 .grey {
 color: #dddddd;
 	border:  solid 1px #ffffff;
