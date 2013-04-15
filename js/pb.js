@@ -165,7 +165,10 @@ function popup(url) {
 	var left = (screen.width/2)-(width/2);
 	var top = (screen.height/2)-(height/2);
 	newWindow = window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
-
+	newWindow.onbeforeunload = function () {
+		// if the popup is closed, we should close our dialog as well
+		$('#flickrShare').dialog("close");
+	}
 	if (window.focus) {newWindow.focus()}
 	return false;
 }
