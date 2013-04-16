@@ -86,14 +86,15 @@ img {
 label {
 	float: left;
 	text-align: right;
-	margin-right: 5px;
-	margin-left: 15px;
-	width: 50px;
+	width: 150px;
+	height: 30px;
+	margin-top: 3px;
 }
 
-input, textarea {
-	width: 300px;
-	margin-left: 0px;
+.dialogbox {
+	width: 350px;
+	margin: 0px 3px 3px !important;
+	padding: 4px !important;
 }
 
 .grey {

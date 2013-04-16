@@ -25,21 +25,25 @@ var initialHeight;
 var initialWidth;
 var i;
 var paletteSpacing = 5;
+var filename;
 
 // Let us know when the user wants to load an image
 function startApp() {
-	$("#loadImage").on("click", buttonClicked);
+	$("#loadImage").mousedown(buttonClicked);
 	document.getElementById('imageUploadBrowse').addEventListener('change', loadImage, false);
 	var shareButton = $("#shareImage");
-	shareButton.on("click", shareImage);
+	shareButton.mousedown(shareImage);
 	shareButton.hide();
 
+	$("#feedback").mousedown(feedback);
+	$("#feedback").hide();
+	
 	var saveButton = $("#saveImage");
-	saveButton.on("click", saveImage);
+	saveButton.mousedown(saveImage);
 	saveButton.hide();
 
 	newColorIcon = $("#newColor");
-	newColorIcon.on ("click", addColor);
+	newColorIcon.mousedown(addColor);
 	newColorIcon.title = "Add another color to the palette";
 	newColorIcon.hide();
 
@@ -91,7 +95,7 @@ function startApp() {
 			.addClass("button grey newcolor")
 			.html('<div><img src="/blog/wp-includes/images/minus.png"></div>');
 		$("#palette" + i).append($colorDiv);
-		$("#remColor" + i).on("click", remColor);
+		$("#remColor" + i).mousedown(remColor);
 		$("#remColor" + i).hide();
 		
 	}
@@ -102,13 +106,13 @@ function startApp() {
 					 .html('<div><img src="/blog/wp-includes/images/reset.png"></div>');
 	$("#paletteUI").append("<br><br>");
 	$("#paletteUI").append($newDiv);
-	$("#resetButton").on("click", resetPalette);
+	$("#resetButton").mousedown(resetPalette);
 	$("#resetButton").hide();
 	
 	// create the flickr share dialog
 	var $newDiv = $("<div/>")
 					.attr("id", "flickrShare")
-					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" name="description">Created with Play Crafts Palette Builder.</textarea></form></div>');
+					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input class="dialogbox" type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" class="dialogbox" rows="3" name="description">Created with Play Crafts Palette Builder. http://www.play-crafts.com/</textarea></form></div>');
 	$("#paletteUI").append($newDiv);
 	$("#flickrShare").dialog({ width: 600, resizable: false, modal: true, position: 'center', closeText: 'x', title: 'Share to flickr', autoOpen: false,
 	         buttons: { "Cancel": function() { $(this).dialog("close"); }, "Share": flickrShare } 
@@ -295,9 +299,53 @@ function flickrShare() {
 		}); */
 }
 
+function feedback() {
+	var feedbackWindow = window.open("http://www.play-crafts.com/blog/palette-builder-v2-0-feedback/");
+	if (window.focus) {feedbackWindow.focus();}
+}
+
 function saveImage() {
 	createImage();
-	window.location = uiFrame.toDataURL('image/png');
+	
+	var data = uiFrame.toDataURL('image/png');
+	var url = '../wp-includes/savefile.php';
+	
+//	window.location = uiFrame.toDataURL('image/png');
+	// Create iFrame
+	var iframe = document.createElement('iframe');
+	iframe.style.display = "none";
+	document.body.appendChild(iframe);
+	
+	// Get the iframe's document
+	var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	
+	// Make a form
+	var form = document.createElement('form');
+	form.action = url; 
+	form.method = 'POST';
+	
+	// Add form element, to post your value
+	var input = document.createElement('input');
+	input.type = 'hidden';
+	input.name = 'base64data';
+	input.value = data;  
+	
+	// Add input to form
+	form.appendChild(input);
+	
+	input = document.createElement('input');
+	input.type = 'hidden';
+	input.name = 'filename';
+	input.value = filename + '-palette';
+	
+	form.appendChild(input);
+	
+	// Add form to iFrame
+	// IE doesn't have the "body" property
+	(iframeDoc.body || iframeDoc).appendChild(form);
+	
+	// Post the form :-)
+	form.submit();
 }
 
 // When the user clicks on our pretty button, trigger the actual ugly button for the file browser window
@@ -457,6 +505,11 @@ function loadImage(evt) {
 
 	  // Closure to capture the file information.
 	  reader.onload = (function (imageFile) {
+	  	var input = imageFile.name;
+	  	//strip the ending off the filename
+	  	filename = input.substr(0, input.lastIndexOf('.')) || input;
+	  	$("#title").val(filename + " palette");
+	  		  	
 	  	return function(e) {
 		  // Render thumbnail
 		  	img = new Image();
@@ -562,6 +615,7 @@ function loadImage(evt) {
 		  $("#loadImage").css({"position": "static"});
 		  $("#shareImage").show();
 		  $("#saveImage").show();
+		  $("#feedback").show();
 		  
 		  // show the reset button
 		  $("#resetButton").show();
