@@ -1,6 +1,6 @@
 // Color-processing utilities for Play Crafts, Inc.
-const colorutils_ASCENDING = 0;
-const colorutils_DESCENDING = 1;
+var colorutils_ASCENDING = 0;
+var colorutils_DESCENDING = 1;
 
 // reduce colors in image
 function reduce(val) {

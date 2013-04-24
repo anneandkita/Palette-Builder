@@ -5,10 +5,14 @@ session_start();
 // Require the phpFlickr API
 require_once('phpFlickr-3.1/phpFlickr.php');
 $data = $_POST['base64data'];
+$description = $_POST['description'];
+$title = $_POST['title'];
 set_time_limit(60);
 if ($data) {
     $image = explode('base64,',$data);
     file_put_contents('../temp/img.png', base64_decode($image[1]));
+    setcookie("title", $title, time()+360000);
+    setcookie("description", $description, time()+360000);
 }
 
 // Create new phpFlickr object: new phpFlickr('[API Key]','[API Secret]')
@@ -30,7 +34,12 @@ else {
 // Send an image sync_upload(photo, title, desc, tags)
 // The returned value is an ID which represents the photo
 echo "Uploading image... (this may take a few moments.)<br>";
-$result = $flickr->sync_upload('../temp/img.png', $_POST['title'], $_POST['description'], 'playcrafts, palette, palette builder');
+if ($title === NULL)
+	$title = $_COOKIE['title'];
+if ($description === NULL)
+	$description = $_COOKIE['description'];
+	
+$result = $flickr->sync_upload('../temp/img.png', $title, $description, 'playcrafts, palette, palette builder');
 echo "Image uploaded!<br>";
 ?>
 <br>

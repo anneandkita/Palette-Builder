@@ -30,21 +30,25 @@ var filename;
 // Let us know when the user wants to load an image
 function startApp() {
 	$("#loadImage").mousedown(buttonClicked);
+	$("#loadImage").attr("title", "Load new image");
 	document.getElementById('imageUploadBrowse').addEventListener('change', loadImage, false);
 	var shareButton = $("#shareImage");
 	shareButton.mousedown(shareImage);
+	shareButton.attr("title", "Share your palette to Flickr");
 	shareButton.hide();
 
 	$("#feedback").mousedown(feedback);
+	$("#feedback").attr("title", "Send us feedback about Palette Builder");
 	$("#feedback").hide();
 	
 	var saveButton = $("#saveImage");
 	saveButton.mousedown(saveImage);
+	saveButton.attr("title", "Save your palette to your computer");
 	saveButton.hide();
 
 	newColorIcon = $("#newColor");
 	newColorIcon.mousedown(addColor);
-	newColorIcon.title = "Add another color to the palette";
+	newColorIcon.attr("title", "Add another color to the palette");
 	newColorIcon.hide();
 
 	uiFrame = document.getElementById('UIframe');
@@ -92,6 +96,7 @@ function startApp() {
 		// make remove color button
 		var $colorDiv = $("<div/>")
 			.attr("id", "remColor"+i)
+			.attr("title", "Remove this color from palette")
 			.addClass("button grey newcolor")
 			.html('<div><img src="/blog/wp-includes/images/minus.png"></div>');
 		$("#palette" + i).append($colorDiv);
@@ -102,6 +107,7 @@ function startApp() {
 	// create a reset button div and hide it
 	var $newDiv = $("<div/>")   // creates a div element
 					 .attr("id", "resetButton")
+					 .attr("title", "Reset the palette")
 					 .addClass("button orange newcolor")   // add a class
 					 .html('<div><img src="/blog/wp-includes/images/reset.png"></div>');
 	$("#paletteUI").append("<br><br>");
@@ -152,6 +158,9 @@ function resetPalette() {
 
 function createImage() {
 	// draw the palette into the canvas
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, uiFrame.height - paletteDiv[0].height() - paletteSpacing, uiFrame.width, paletteDiv[0].height()+paletteSpacing);
+	
 	for (i=0; i<paletteSize; i++)
 	{
 		ctx.fillStyle = paletteDiv[i].css("backgroundColor");
@@ -186,6 +195,7 @@ function shareImage() {
 	createImage();
 	var flickrCtx = document.getElementById("flickrImg").getContext('2d');
 	flickrCtx.clearRect(0, 0, $('#flickrImg').width(), $('#flickrImg').height());
+	
 	var widthScale = $('#flickrImg').width() / uiFrame.width;
 	var heightScale = $('#flickrImg').height() / uiFrame.height;
 	var flickrScale = 1;
@@ -201,6 +211,8 @@ function shareImage() {
 		flickrScale = 1;
 	}
 	
+	flickrCtx.fillStyle="white";
+	flickrCtx.fillRect(0,0,flickrScale * uiFrame.width, flickrScale * uiFrame.height);
 	flickrCtx.drawImage(uiFrame, 0, 0, flickrScale * uiFrame.width, flickrScale * uiFrame.height);
 }
 
@@ -410,11 +422,11 @@ function addColor() {
 function moveCircle(event, ui) {
 	// find current x,y of div
 	var circleID = this.id.substr(this.id.length-1);
-	var circleX = ui.position.left - img.offsetLeft + circleDiv[circleID].offsetWidth/2;
-	var circleY = ui.position.top - img.offsetTop + circleDiv[circleID].offsetWidth/2;
+	var circleX = Math.round(ui.position.left - img.offsetLeft + circleDiv[circleID].offsetWidth/2);
+	var circleY = Math.round(ui.position.top - img.offsetTop + circleDiv[circleID].offsetWidth/2);
 
 	// figure out what color pixel the circle is over
-	var pixelNum = Math.round(circleY * img.width + circleX) * 4;
+	var pixelNum = (circleY * img.width + circleX) * 4;
 	var color = "rgba(" + imgData.data[pixelNum] + "," + imgData.data[pixelNum+1] + "," + imgData.data[pixelNum+2] + ")";
 
 	// change div background to the appropriate color
@@ -548,6 +560,8 @@ function loadImage(evt) {
 				// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 				// clear the canvas first so we're not drawing a bunch of images on top of each other
 				ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
+				ctx.fillStyle="ffffff";
+				ctx.fillRect(0,0,uiFrame.width, uiFrame.height);
 				if (imgFrame.lastChild)
 					imgFrame.removeChild(imgFrame.lastChild);
 
