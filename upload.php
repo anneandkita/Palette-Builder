@@ -8,11 +8,14 @@ $data = $_POST['base64data'];
 $description = $_POST['description'];
 $title = $_POST['title'];
 set_time_limit(60);
+
 if ($data) {
-    $image = explode('base64,',$data);
-    file_put_contents('../temp/img.png', base64_decode($image[1]));
+	$ourtime = time() + 5;
+	$image = explode('base64,',$data);
+    file_put_contents('../temp/img' . $ourtime . '.png', base64_decode($image[1]));
     setcookie("title", $title, time()+360000);
     setcookie("description", $description, time()+360000);
+    setcookie("ourtime", $ourtime, time()+360000);
 }
 
 // Create new phpFlickr object: new phpFlickr('[API Key]','[API Secret]')
@@ -38,9 +41,12 @@ if ($title === NULL)
 	$title = $_COOKIE['title'];
 if ($description === NULL)
 	$description = $_COOKIE['description'];
+if ($ourtime === NULL)
+	$ourtime = $_COOKIE['ourtime'];
 	
-$result = $flickr->sync_upload('../temp/img.png', $title, $description, 'playcrafts, palette, palette builder');
+$result = $flickr->sync_upload('../temp/img' . $ourtime .'.png', $title, $description, 'playcrafts, palette, palette builder');
 echo "Image uploaded!<br>";
+unlink('../temp/img' . $ourtime . '.png');
 ?>
 <br>
 <link href="css/pb.css" rel="stylesheet" type="text/css" />
