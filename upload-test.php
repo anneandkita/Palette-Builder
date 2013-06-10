@@ -20,7 +20,7 @@ if ($data) {
 }
 
 // Create new phpFlickr object: new phpFlickr('[API Key]','[API Secret]')
-$flickr = new phpFlickr('e9006adcd85a53cf99b6de1cf7ccba72','377934e7e9b4ac6b', true);
+$flickr = new phpFlickr('449a47b49fd5569d38e6fc1f631e73bb','d68705c030f308ad', true);
 
 
 // Authenticate;  need the "IF" statement or an infinite redirect will occur
@@ -31,7 +31,7 @@ if(empty($_GET['frob'])) {
 else {
     // Get the FROB token, refresh the page;  without a refresh, there will be "Invalid FROB" error
     $flickr->auth_getToken($_GET['frob']);
-    header('Location: upload-test.php');
+    header('Location: upload.php');
     exit();
 }
 
