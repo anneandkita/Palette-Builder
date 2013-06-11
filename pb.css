@@ -35,6 +35,10 @@ p {
     top: -5000px;
 }
 
+.colormatch {
+	position: absolute;	
+}
+
 img {
     max-width: none !important;
 }

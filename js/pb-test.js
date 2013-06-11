@@ -27,38 +27,48 @@ var i;
 var paletteSpacing = 5;
 var filename;
 
-// Let us know when the user wants to load an image
 function startApp() {
+	// set up for the load image button
 	$("#loadImage").click(buttonClicked);
 	$("#loadImage").attr("title", "Load new image");
 	document.getElementById('imageUploadBrowse').addEventListener('change', loadImage, false);
+	
+	// setup for the share button
 	var shareButton = $("#shareImage");
 	shareButton.mousedown(shareImage);
 	shareButton.attr("title", "Share your palette to Flickr");
+	// hide until an image is loaded
 	shareButton.hide();
 
+	// setup for the feedback button
 	$("#feedback").mousedown(feedback);
 	$("#feedback").attr("title", "Send us feedback about Palette Builder");
+	// hide until an image is loaded
 	$("#feedback").hide();
 	
+	// setup for the save button
 	var saveButton = $("#saveImage");
 	saveButton.mousedown(saveImage);
 	saveButton.attr("title", "Save your palette to your computer");
+	// hide until an image is loaded
 	saveButton.hide();
 
+	// setup for the new palette color button
 	newColorIcon = $("#newColor");
 	newColorIcon.mousedown(addColor);
 	newColorIcon.attr("title", "Add another color to the palette");
+	// hide until an image is loaded
 	newColorIcon.hide();
 
+	// setup for the image and palette area that the user will interact with
 	uiFrame = document.getElementById('UIframe');
 	initialHeight = uiFrame.height;
 	initialWidth = uiFrame.width;
 	ctx = uiFrame.getContext('2d');
 
-	// load all the palette divs into the array
 	for (i=0; i<maxPaletteSize; i++)
-	{    	
+	{   
+		// load all the information for each circle element
 		var $cirDiv = $("<div/>")
 			.attr("id", "circle" + i)
 			.addClass("circle")
@@ -72,25 +82,30 @@ function startApp() {
 					paletteCircles[circleID].y = ui.position.top - img.offsetTop + circleDiv[circleID].width()/2;
 				}
 			});
+		// add the palette circle elements to the paletteCircles div
 		$("#paletteCircles").append($cirDiv);
 		circleDiv[i] = $cirDiv;
+		// hide until the an image is loaded
 		circleDiv[i].hide();
 		
-		// make palette div
+		// add information for each palette square
 		var $palDiv = $("<div/>")
 			.attr("id", "palette" + i)
 			.addClass("palette")
 			.html('<div></div>')
+			// asssociate remove color button for each palette square
 			.hover(function(){ 
 				$("#remColor"+this.id.substr(this.id.length-1)).show();
 			}, function() { 
 				$("#remColor"+this.id.substr(this.id.length-1)).hide();
 			});
+		// add the palette square to the paletteUI div
 		$("#paletteUI").before($palDiv);
 		paletteDiv[i] = $palDiv;
+		// hide until an image is loaded
 		paletteDiv[i].hide();
 		
-		//make buffer div
+		//make buffer div (whitespace between the palette squares)
 		var $bufDiv = $("<div/>")
 			.attr("id", "buffer" + i)
 			.addClass("buffer")
@@ -98,6 +113,7 @@ function startApp() {
 		$("#paletteUI").before($bufDiv);
 		bufferDiv[i] = $bufDiv;
 		bufferDiv[i].hide();
+		
 		// make remove color button
 		var $colorDiv = $("<div/>")
 			.attr("id", "remColor"+i)
@@ -108,7 +124,8 @@ function startApp() {
 		$("#remColor" + i).mousedown(remColor);
 		$("#remColor" + i).hide();
 		
-	}
+	} // end for each color loop
+	
 	// create a reset button div and hide it
 	var $newDiv = $("<div/>")   // creates a div element
 					 .attr("id", "resetButton")
@@ -120,8 +137,16 @@ function startApp() {
 	$("#resetButton").mousedown(resetPalette);
 	$("#resetButton").hide();
 	
-	// create the flickr share dialog
-	var $newDiv = $("<div/>")
+	// create div and load information for color matching area
+	$newDiv = $("<div/>")
+				.attr("id", "colorMatch")
+				.addClass("colormatch")
+				.html('<div></div>');
+	$("#pblogo").append($newDiv);
+	$("#colorMatch").hide();
+	 	
+	// create the flickr share dialog box for popping up when the user clicks the share button
+	$newDiv = $("<div/>")
 					.attr("id", "flickrShare")
 					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input class="dialogbox" type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" class="dialogbox" rows="3" name="description">Created with Play Crafts Palette Builder. http://www.play-crafts.com/</textarea></form></div>');
 	$("#paletteUI").append($newDiv);
@@ -455,6 +480,70 @@ function reDraw() {
 	drawPalette();
 }
 
+// take care of drawing what fabrics or hex values the colors match to
+// this should be done on mouseUp for color changes since database calls are a bit too long to do real time
+// TODO test that this claim is true
+function drawColorMatch() {
+	// for each color
+	for (var i=0; i<paletteSize; i++)
+	{
+		var paletteL = palette[i].CIEL;
+		// convert to 0-255
+		var palettea = palette[i].CIEa + 127;
+		// convert to 0-255
+		var paletteb = palette[i].CIEb + 127;
+		var closestMatch;
+		var smallestDistance = 9999999;
+		
+		// find the closest reference color
+		for (var CIEL = 0; CIEL <= 100; CIEL += 12)
+		{
+			for (var CIEa = 0; CIEa <= 255; CIEa += 31)
+			{
+				for (var CIEb = 0; CIEb <= 255; CIEb += 31)
+				{
+					var distance = Math.sqrt(Math.pow((CIEL-paletteL), 2) + Math.pow((CIEa-palettea), 2) + Math.pow((CIEb - paletteb), 2));
+					if (distance < smallestDistance)
+					{
+						smallestDistance = distance;
+						closestMatch = CIEL.toString() + CIEa.toString() + CIEb.toString();
+					}
+				}
+			}
+		}
+		// find closest matching solid fabric
+		$.ajax({
+		  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
+		  type: 'GET',
+		  data: {
+		  	refColor: closestMatch
+		  },
+		  
+		  complete: function(xhr, status) {
+			  if (status === 'error' || !xhr.responseText) {
+			       alert("error: " + xhr.responseText);
+			  }
+			  else {
+			  	var data = jQuery.parseJSON(xhr.responseText);
+			  	for (var i=0 ; i < data.length; i+=2)
+			  	{
+			  		//add the image and the name
+			  		if (i > 1)
+			  		{
+			  			$("#colorMatch").append(" or ");
+			  		}
+			  		$("#colorMatch").append("<img style='width:50px !important' src=\"" + data[i] + "\"> " + data[i+1]);
+			    }
+				$("#colorMatch").append("<BR>");
+			  }
+		  } 
+		});
+	
+		// draw fabric swatch
+		// write name of fabric
+	}
+}
+
 function drawCircles() {
 	// reset offset
 	totalOffset.x = totalOffset.y = 0;
@@ -628,20 +717,30 @@ function loadImage(evt) {
 				// draw the circles and palette
 				drawCircles();
 				drawPalette();
+
+			  // move the load image button down below the picture
+			  $("#loadImage").css({"position": "static"});
+			  
+			  // show all the stuff that's been hidden
+			  $("#shareImage").show();
+			  $("#saveImage").show();
+			  $("#feedback").show();
+			  $("#colorMatch").show();
+			  $("#resetButton").show();
+	
+			  // change where colorMatch div is drawn based on size of image canvas
+			  $("#colorMatch").css({
+			  		'top': imgFrame.offsetTop + "px",
+			  		'width': '300px',
+			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 20 + "px",
+			  		'height': uiFrame.height + "px"
+			  });
+			  $("#colorMatch").html("");
+			  drawColorMatch();		  
+			}; 
+			
 			};
 		
-		  // move the load image button down below the picture
-		  $("#loadImage").css({"position": "static"});
-		  $("#shareImage").show();
-		  $("#saveImage").show();
-		  $("#feedback").show();
-		  
-		  // show the reset button
-		  $("#resetButton").show();
-
-		  
-		  
-		}; 
 	  })(imageFile);
 
 	  // Read in the image file as a data URL.

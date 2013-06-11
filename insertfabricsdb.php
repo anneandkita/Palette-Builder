@@ -28,6 +28,10 @@ else
 			$colorb = mysqli_real_escape_string($con, $_POST["colorb"]);
 			settype($colorb, "double");				
 			
+			// get a and b from -127-127 range to 0-255 range
+			$colora += 127;
+			$colorb += 127;
+
 			for ($CIEL = 0; $CIEL <= 100; $CIEL += 12)
 			{
 				for ($CIEa = 0; $CIEa <= 255; $CIEa += 31)
@@ -37,17 +41,19 @@ else
 						$tableName = "refcolor" . $CIEL . $CIEa . $CIEb;
 						$sql = "SELECT * FROM $tableName WHERE color = $colorID LIMIT 1";
 						$result = mysqli_query($con, $sql);
+						// calculate distance sqrt((L1-L2)^2 + (a1-a2)^2 + (b1-b2)^2)
+						$distance = sqrt(pow($CIEL-$colorL, 2) + pow($CIEa-$colora, 2) + pow($CIEb-$colorb, 2));
 						if($result->num_rows == 0)
 						{
-							// get a and b from -127-127 range to 0-255 range
-							$colora += 127;
-							$colorb += 127;
-							// calculate distance sqrt((L1-L2)^2 + (a1-a2)^2 + (b1-b2)^2)
-							$distance = sqrt(pow($CIEL-$colorL, 2) + pow($CIEa-$colora, 2) + pow($CIEb-$colorb, 2));
-			
 							$sql = "INSERT INTO $tableName (color, distance)
 									VALUES ($colorID, $distance)";	
 							mysqli_query($con,$sql);			
+						}
+						else {
+							$sql = "UPDATE $tableName 
+							SET distance = $distance
+							WHERE color = $colorID"; 
+							mysqli_query($con, $sql);
 						}
 					}
 				}
