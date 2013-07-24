@@ -37,6 +37,14 @@ p {
 
 .colormatch {
 	position: absolute;	
+	background-color: 0x888888;
+}
+
+.match {
+	height: 45px !important;
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+	vertical-align: middle;
 }
 
 img {

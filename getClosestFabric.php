@@ -12,21 +12,25 @@ if (mysqli_connect_errno($con))
 }
 else 
 {		
-	// which table are we looking at
-	$refColor = mysqli_real_escape_string($con, $_GET["refColor"]);
+	// TODO: This is currently assuming that only Konas are in the database. This will need to be modified/optimized when other fabrics are added
+	$CIEL = mysqli_real_escape_string($con, $_GET["CIEL"]);
+	$CIEa = mysqli_real_escape_string($con, $_GET["CIEa"]);
+	$CIEb = mysqli_real_escape_string($con, $_GET["CIEb"]);
 
-	$refTable = "refcolor$refColor";
-	$sql = "SELECT * FROM $refTable";
+	$sql = "SELECT * FROM color";
 	
 	$result = mysqli_query($con, $sql); // run the query and assign the result to $result
 	$distance = 99999999;
 	$closest = null;
-	while($row = mysqli_fetch_array($result)) { // go through each row that was returned in $result
-		// look at all the distances, and find the smallest one
-		if ($row[1] < $distance)
+	while($row = mysqli_fetch_array($result)) 
+	{ // go through each row that was returned in $result
+
+		// calculate the distance
+		$calcDistance = sqrt(pow($row["L"]-$CIEL, 2) + pow($row["a"]-$CIEa, 2) + pow($row["b"]-$CIEb, 2));
+		if ($calcDistance < $distance)
 		{
-			$distance = $row[1];
-			$closest = $row[0];
+			$distance = $calcDistance;
+			$closest = $row["id"];
 		}
 	}
 	

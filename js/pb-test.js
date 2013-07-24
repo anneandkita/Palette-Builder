@@ -8,6 +8,7 @@ var paletteDiv = [];
 var initialPaletteDiv = [];
 var bufferDiv = [];
 var circleDiv = [];
+var matchDiv = [];
 var paletteCircles = [];
 var initialCircles = [];
 var newColorIcon;
@@ -60,6 +61,12 @@ function startApp() {
 	// hide until an image is loaded
 	newColorIcon.hide();
 
+	// create div and load information for color matching area
+	$newDiv = $("<div/>")
+				.attr("id", "colorMatch")
+				.addClass("colormatch");
+	$("#pblogo").append($newDiv);
+
 	// setup for the image and palette area that the user will interact with
 	uiFrame = document.getElementById('UIframe');
 	initialHeight = uiFrame.height;
@@ -80,6 +87,7 @@ function startApp() {
 					var circleID = this.id.substr(this.id.length-1);
 					paletteCircles[circleID].x = ui.position.left - img.offsetLeft + circleDiv[circleID].width()/2;
 					paletteCircles[circleID].y = ui.position.top - img.offsetTop + circleDiv[circleID].width()/2;
+					drawColorMatch(circleID);
 				}
 			});
 		// add the palette circle elements to the paletteCircles div
@@ -124,7 +132,17 @@ function startApp() {
 		$("#remColor" + i).mousedown(remColor);
 		$("#remColor" + i).hide();
 		
+		// create divs inside the color matching area to hold the color info
+		var $matchDiv = $("<div/>")
+			.attr("id", "matchColor"+i)
+			.addClass("match");
+		$("#colorMatch").append($matchDiv);
+		matchDiv[i] = $matchDiv;
+		matchDiv[i].hide();
+		
 	} // end for each color loop
+	
+	$("#colorMatch").hide();
 	
 	// create a reset button div and hide it
 	var $newDiv = $("<div/>")   // creates a div element
@@ -135,15 +153,7 @@ function startApp() {
 	$("#paletteUI").append("<br><br>");
 	$("#paletteUI").append($newDiv);
 	$("#resetButton").mousedown(resetPalette);
-	$("#resetButton").hide();
-	
-	// create div and load information for color matching area
-	$newDiv = $("<div/>")
-				.attr("id", "colorMatch")
-				.addClass("colormatch")
-				.html('<div></div>');
-	$("#pblogo").append($newDiv);
-	$("#colorMatch").hide();
+	$("#resetButton").hide();	
 	 	
 	// create the flickr share dialog box for popping up when the user clicks the share button
 	$newDiv = $("<div/>")
@@ -248,7 +258,7 @@ function shareImage() {
 
 function flickrShare() {
 	var data = uiFrame.toDataURL('image/png');
-	var url = 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/upload.php';
+	var url = 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/upload-test.php';
 	
 	popup('about:blank');
 	var form = document.createElement("form");
@@ -280,65 +290,6 @@ function flickrShare() {
 	document.body.appendChild(form);
 	form.submit();
 	
-	   // popup(url+"?base64data="+data);
-/*        $.ajax({
-			type: "POST",
-			url: url,
-			dataType: 'text',
-			data: {
-				auth : "false",
-				title : $("input#title").val(),
-				description: $("textarea#description").val(),
-				base64data : data
-			},
-			success: function (result) {
-//				if (result > -1)
-			    	$('#flickrForm').html("Your palette was successfully shared to Flickr!"); 
-			    else {
-			    	// need to authenticate
-			    	$('#flickrForm').html("You need to authenticate or login with Flickr.");
-			    	// doing a form because just putting everything on the URL creates a URL that is too long. yay.
-			    	// can't use AJAX because we need the user to do some stuff over on flickr
-			    	// there has got to be a better way to do this, but I don't know what it is
-					var form = document.createElement("form");
-					form.setAttribute("method", "post");
-					form.setAttribute("action", url);
-					form.setAttribute("target", "popup");
-				
-					var hiddenField = document.createElement("input");
-					hiddenField.setAttribute("type", "hidden");
-					hiddenField.setAttribute("name", "base64data");
-					hiddenField.setAttribute("value", data);
-				
-					form.appendChild(hiddenField);
-				
-					hiddenField = document.createElement("input");
-					hiddenField.setAttribute("type", "hidden");
-					hiddenField.setAttribute("name", "title");
-					hiddenField.setAttribute("value", $("#title").val());
-					
-					form.appendChild(hiddenField);
-					
-					hiddenField = document.createElement("textarea");
-					hiddenField.setAttribute("type", "hidden");
-					hiddenField.setAttribute("name", "description");
-					hiddenField.setAttribute("value", $("#description").val());
-					
-					form.appendChild(hiddenField);
-					
-					hiddenField = document.createElement("input");
-					hiddenField.setAttribute("type", "hidden");
-					hiddenField.setAttribute("name", "auth");
-					hiddenField.setAttribute("value", "true");
-					
-					form.appendChild(hiddenField);
-				
-					document.body.appendChild(form);
-			    	form.submit();
-			    } 
-			    
-			} 
-		}); */
 }
 
 function feedback() {
@@ -445,7 +396,7 @@ function addColor() {
 	 	}
 	
 	
-	reDraw();
+	reDraw(paletteSize-1);
 }
 
 // move the circle to where the mouse on mousemove
@@ -465,11 +416,15 @@ function moveCircle(event, ui) {
 	palette[paletteColorIdx].r = imgData.data[pixelNum];
 	palette[paletteColorIdx].g = imgData.data[pixelNum+1];
 	palette[paletteColorIdx].b = imgData.data[pixelNum+2];
+	var Lab = rgb2lab(palette[paletteColorIdx]);
+	palette[paletteColorIdx].CIEL = Lab.CIEL;
+	palette[paletteColorIdx].CIEa = Lab.CIEa;
+	palette[paletteColorIdx].CIEb = Lab.CIEb;
 	$(paletteDiv[paletteColorIdx]).css({backgroundColor: color});
 }
 
-// Redraw the screen at set intervals to support the movement of the circles
-function reDraw() {
+// Redraw the screen to support the movement of the circles
+function reDraw(palIndex) {
 
 	// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 	//ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
@@ -478,70 +433,68 @@ function reDraw() {
 	// draw the circles and palette
 	drawCircles();
 	drawPalette();
+	drawColorMatch(palIndex);
 }
 
 // take care of drawing what fabrics or hex values the colors match to
 // this should be done on mouseUp for color changes since database calls are a bit too long to do real time
 // TODO test that this claim is true
-function drawColorMatch() {
-	// for each color
-	for (var i=0; i<paletteSize; i++)
-	{
-		var paletteL = palette[i].CIEL;
-		// convert to 0-255
-		var palettea = palette[i].CIEa + 127;
-		// convert to 0-255
-		var paletteb = palette[i].CIEb + 127;
-		var closestMatch;
-		var smallestDistance = 9999999;
-		
-		// find the closest reference color
-		for (var CIEL = 0; CIEL <= 100; CIEL += 12)
-		{
-			for (var CIEa = 0; CIEa <= 255; CIEa += 31)
-			{
-				for (var CIEb = 0; CIEb <= 255; CIEb += 31)
-				{
-					var distance = Math.sqrt(Math.pow((CIEL-paletteL), 2) + Math.pow((CIEa-palettea), 2) + Math.pow((CIEb - paletteb), 2));
-					if (distance < smallestDistance)
-					{
-						smallestDistance = distance;
-						closestMatch = CIEL.toString() + CIEa.toString() + CIEb.toString();
-					}
-				}
-			}
-		}
-		// find closest matching solid fabric
-		$.ajax({
-		  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
-		  type: 'GET',
-		  data: {
-		  	refColor: closestMatch
-		  },
-		  
-		  complete: function(xhr, status) {
-			  if (status === 'error' || !xhr.responseText) {
-			       alert("error: " + xhr.responseText);
-			  }
-			  else {
-			  	var data = jQuery.parseJSON(xhr.responseText);
-			  	for (var i=0 ; i < data.length; i+=2)
-			  	{
-			  		//add the image and the name
-			  		if (i > 1)
-			  		{
-			  			$("#colorMatch").append(" or ");
-			  		}
-			  		$("#colorMatch").append("<img style='width:50px !important' src=\"" + data[i] + "\"> " + data[i+1]);
-			    }
-				$("#colorMatch").append("<BR>");
-			  }
-		  } 
-		});
+function drawColorMatch(indexColor) {
+	var startNum = 0;
+	var endNum = paletteSize;
 	
-		// draw fabric swatch
-		// write name of fabric
+	if ((typeof indexColor !== 'undefined'))
+	{
+		startNum = parseInt(indexColor);
+		endNum = startNum+1;
 	}
+	// for each color
+	for (var i=startNum; i<endNum; i++)
+	{
+		(function (i)
+		{
+			var paletteL = palette[i].CIEL;
+			var palettea = palette[i].CIEa;
+			var paletteb = palette[i].CIEb;
+			
+			matchDiv[i].show();
+			matchDiv[i].html("");
+			// find closest matching solid fabric
+			$.ajax({
+			  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
+			  type: 'GET',
+			  data: {
+			  	CIEL: paletteL,
+			  	CIEa: palettea,
+			  	CIEb: paletteb
+			  },
+			  
+			  complete: function(xhr, status) {
+				  if (status === 'error' || !xhr.responseText) {
+				       alert("error: " + xhr.responseText);
+				  }
+				  else {
+				  	var data = jQuery.parseJSON(xhr.responseText);
+				  	for (var j=0 ; j < data.length; j+=2)
+				  	{
+				  		//add the image and the name
+				  		if (j > 1)
+				  		{
+				  			matchDiv[i].append(" or ");
+				  		}
+				  		matchDiv[i].append("<img style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\"> Kona " + data[j+1].replace(/_/g," "));
+				    }
+					matchDiv[i].append("<BR>");
+				  }
+			  } 
+			});		
+		})(i);
+	}
+	for (i=paletteSize; i<maxPaletteSize; i++)
+	{
+		matchDiv[i].hide();
+	}
+	
 }
 
 function drawCircles() {
@@ -732,10 +685,9 @@ function loadImage(evt) {
 			  $("#colorMatch").css({
 			  		'top': imgFrame.offsetTop + "px",
 			  		'width': '300px',
-			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 20 + "px",
+			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 45 + "px",
 			  		'height': uiFrame.height + "px"
 			  });
-			  $("#colorMatch").html("");
 			  drawColorMatch();		  
 			}; 
 			
