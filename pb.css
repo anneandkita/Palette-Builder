@@ -19,6 +19,10 @@ p {
     float: left;
 }
 
+.palette.Hover {
+	border-bottom: 4px solid #333;
+}
+
 .buffer {
     width: 5px;
     height: 100px;
@@ -28,6 +32,7 @@ p {
     color: #ffffff !important;
     font-style: oblique;
     padding: 5px !important;
+    margin-bottom: 5px;
 }
 
 .uiCanvas {
@@ -37,7 +42,6 @@ p {
 
 .colormatch {
 	position: absolute;	
-	background-color: 0x888888;
 }
 
 .match {
@@ -45,6 +49,7 @@ p {
 	font-family: Calibri, Arial, Helvetica, sans-serif;
 	font-size: 10pt;
 	vertical-align: middle;
+	line-height: 45px;
 }
 
 img {
@@ -58,10 +63,16 @@ img {
     width: 10px;
     height: 10px;
     border: 3px solid white;
-    -moz-box-shadow: 0 0 5px 5px rgba(0,0,0,.4);
-    -webkit-box-shadow: 0 0 5px 5px rgba(0,0,0,.4);
-    box-shadow: 0 0 1px rgba(0,0,0,.4);
+    -moz-box-shadow: 0 0 5px 5px rgba(0,0,0,.8), inset 0 0 1px 0 rgba(0,0,0,.4);
+    -webkit-box-shadow: 0 0 5px 5px rgba(0,0,0,.8), inset 0 0 1px 0 rgba(0,0,0,.4);
+    box-shadow: 0 0 1px 0px rgba(0,0,0,.8), inset 0 0 1px 0 rgba(0,0,0,.4);
     position: absolute !important;
+}
+
+.circle.Hover {
+	width: 14px;
+	height: 14px;
+	border: 3px solid white;
 }
 
 .button {
@@ -173,4 +184,90 @@ color: #dddddd;
 	background: -webkit-gradient(linear, left top, left bottom, from(#f47a20), to(#faa51a));
 	background: -moz-linear-gradient(top,  #f47a20,  #faa51a);
 	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f47a20', endColorstr='#faa51a');
+}
+
+.savematchcheck
+{
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	position:  relative;
+	text-align: left;
+	float: none;
+	
+}
+
+.dropdown 
+{
+	color: #555;
+	margin: 3px -22px 0 0;
+	width: 185px;
+	position: relative;
+	height: 17px;
+	text-align:left;
+}
+
+.submenu
+{
+	background: #fff;
+	position: absolute;
+	top: -22px;
+	left: -20px;
+	z-index: 80;
+	width: 200px;
+	display: none;
+	margin-left: 10px;
+	padding: 40px 0 5px;
+	border-radius: 6px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.dropdown li a 
+{
+	color: #555555;
+	display: block;
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	padding: 6px 15px;
+	cursor: pointer;
+	text-decoration:none !important;
+}
+
+.dropdown li a:hover
+{
+	background:#155FB0;
+	color: #FFFFFF;
+	text-decoration: none !important;
+}
+
+.matchwhat
+{
+	border-radius: 6px;
+	font-family: Calibri, Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+}
+
+a.matchwhat 
+{
+	font-size: 12pt;
+	line-height: 16px;
+	color: #555;
+	position: absolute;
+	z-index: 90;
+	display: block;
+	padding: 5px 9px 5px 9px;
+	height: 20px;
+	width: 175px;
+	margin: -21px 0 0 -10px;
+	text-decoration: none;
+	background: url(/blog/wp-includes/images/arrow.png) 175px 13px no-repeat;
+	cursor:pointer;
+}
+.root
+{
+	list-style:none !important;
+	margin:0px;
+	padding:0px;
+	font-size: 12pt;
+	padding: 11px 0 0 0;
+	border-top:1px solid #dedede;
 }

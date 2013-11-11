@@ -22,7 +22,7 @@ function processImage(imgURL) {
 		// Now that we have the palette, we can start putting the information into the right tables
 		// fabric: id (auto-incremented), fabric name, line, designer, manufacturer, image filename, url
 		// TODO: Don't have this be hardcoded for Konas
-/*		$.ajax({
+		$.ajax({
 			url: 'insertfabricsdb.php',
 			type: 'POST',
 			data: {
@@ -74,7 +74,7 @@ function processImage(imgURL) {
 				$("#errorMessage").append(status + "<BR>");
 			}
 		});
-		*/
+		
 		// for each reference color (eg refcolor2550128): fabric id, color id, distance to reference color
 		// send the color, have the php script calculate the distance so we can do every reference table at once
 		$.ajax({

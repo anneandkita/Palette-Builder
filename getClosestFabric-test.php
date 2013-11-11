@@ -43,6 +43,8 @@ else
 				$closestRGB["blue"] = "255";
 		}
 	}
+	echo "Distance is $distance<br>";
+	echo "Closestrgb is " . print_r($closestRGB) . "<br>";
 	
 	// find the fabric that matches this color
 	$sql = "SELECT * FROM fabriccolor WHERE color=$closest";

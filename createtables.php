@@ -1,6 +1,6 @@
 <?php
 // Create connection
-$con=mysqli_connect("fabricfinder.cwf0k1kp7jtd.us-west-2.rds.amazonaws.com", "playcrafts", "x41U5L30223Y92b", "fabrics");
+$con=mysqli_connect("localhost", "root", "x41U5L30223Y92b", "fabricdb");
 
 function create_tables($con)
 {

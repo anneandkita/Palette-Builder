@@ -2,7 +2,7 @@
 echo sqrt(pow(72-74.58, 2) + pow(124-126, 2) + pow(124-131, 2));
 
 // Create connection
-$con=mysqli_connect("fabricfinder.cwf0k1kp7jtd.us-west-2.rds.amazonaws.com", "playcrafts", "x41U5L30223Y92b", "fabrics");
+$con=mysqli_connect("localhost", "root", "x41U5L30223Y92b", "fabricdb");
 
 // Check connection
 if (mysqli_connect_errno($con))

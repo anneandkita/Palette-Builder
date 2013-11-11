@@ -9,20 +9,38 @@
 	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
     <script type="text/javascript" src="js/pb-test.js"></script>
     <script type="text/javascript" src="js/colorutils.js"></script>
+    <script src="js/jquery-co.js"></script>
 </head>
 
 <body>
-<div id="pblogo"><img src="images/palettebuilderlogosm.png"></div>
+<div id="pblogo"><img src="images/palettebuilderlogosm.png">
+<div id="colorMatch" class="colormatch">
+<div id="matchwhat" class="dropdown"><a class="matchwhat">Match:Kona Cottons</a>
+<div id="submenu" class="submenu">
+<ul id="root" class="root">
+<li id="hex"><a>Hex Values</a></li>
+<li id="kona"><a>Kona Cottons</a></li>
+</ul>
+</div>
+</div>
+<div id="savestuff">
+<label class="savematchcheck"><input type='checkbox' id='SaveMatch' value='save match' checked />Save matches with palette</label><br><br>
+</div>
+</div>
+</div>
 <canvas id="UIframe" class="uiCanvas" width=600 height=500>
 Your browser does not support this application. Please update your browser or try a different browser.
 </canvas>
-<div id="imgFrame" style="width:675px; height:300px;"></div>
+<canvas id="UIframeMatch" class="uiCanvas" width=600 height=500>
+</canvas>
+<div id="imgFrame" style="width:600px; height:300px;"></div>
 <div id="paletteCircles">
 </div>
-<div id="paletteFrame" style="width: 725px; height: 105px;">
+<div id="paletteFrame" style="width: 650px; height: 105px;">
 	<div id="paletteCircles"></div>
 	<div id="paletteUI">
 		<div id="newColor" class="button lime newcolor"><img src="/blog/wp-includes/images/plus.png"></div>
+		<div id="resetButton" class="button orange newcolor"><img src="/blog/wp-includes/images/reset.png"></div>
 	</div>
 </div>
 <div style="clear: both;"></div>
@@ -31,6 +49,7 @@ Your browser does not support this application. Please update your browser or tr
 <div class="button orange" id="shareImage">Share</div>
 <div class="button orange" id="saveImage">Save</div>
 <div class="button orange" id="feedback">Leave Feedback</div>
+<div id="buyNowButton" class="button orange">Buy Custom Bundle</div>
 <br>
 </body>
 </html>

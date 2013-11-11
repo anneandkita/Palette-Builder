@@ -12,8 +12,8 @@ var matchDiv = [];
 var paletteCircles = [];
 var initialCircles = [];
 var newColorIcon;
-var ctx, imgScale;
-var img, uiFrame, imgFrame;
+var ctx, ctxMatch, imgScale;
+var img, uiFrame, imgFrame, uiFrameMatch;
 var defaultPaletteSize = 6;
 var initialPaletteSize = 0;
 var paletteSize;
@@ -27,7 +27,16 @@ var initialWidth;
 var i;
 var paletteSpacing = 5;
 var filename;
+var matching = "kona";
+var saveMatching = true;
+// height/width of hex value div
+var hexDivSize = 40;
+// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
+// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
+// compliant by then.
+var kona = []; 
 
+// I'm creating a lot of the elements on the fly here because it's easier than updating the Wordpress host that the app is buried inside. Wordpress likes to lose ids and stuff if you accidently load the post in Visual style instead of Text style.
 function startApp() {
 	// set up for the load image button
 	$("#loadImage").click(buttonClicked);
@@ -61,25 +70,23 @@ function startApp() {
 	// hide until an image is loaded
 	newColorIcon.hide();
 
-	// create div and load information for color matching area
-	$newDiv = $("<div/>")
-				.attr("id", "colorMatch")
-				.addClass("colormatch");
-	$("#pblogo").append($newDiv);
-
 	// setup for the image and palette area that the user will interact with
 	uiFrame = document.getElementById('UIframe');
 	initialHeight = uiFrame.height;
 	initialWidth = uiFrame.width;
 	ctx = uiFrame.getContext('2d');
 
+	uiFrameMatch = document.getElementById('UIframeMatch');
+	ctxMatch = uiFrameMatch.getContext('2d');
+
 	for (i=0; i<maxPaletteSize; i++)
-	{   
+	{    
 		// load all the information for each circle element
 		var $cirDiv = $("<div/>")
 			.attr("id", "circle" + i)
 			.addClass("circle")
 			.html('<div></div>')
+			.hover(addCircleHoverEffects, removeCircleHoverEffects)
 			.draggable({
 				containment: "#imgFrame",
 				drag: moveCircle,
@@ -102,11 +109,7 @@ function startApp() {
 			.addClass("palette")
 			.html('<div></div>')
 			// asssociate remove color button for each palette square
-			.hover(function(){ 
-				$("#remColor"+this.id.substr(this.id.length-1)).show();
-			}, function() { 
-				$("#remColor"+this.id.substr(this.id.length-1)).hide();
-			});
+			.hover(addPaletteHoverEffects, removePaletteHoverEffects);
 		// add the palette square to the paletteUI div
 		$("#paletteUI").before($palDiv);
 		paletteDiv[i] = $palDiv;
@@ -144,25 +147,138 @@ function startApp() {
 	
 	$("#colorMatch").hide();
 	
-	// create a reset button div and hide it
-	var $newDiv = $("<div/>")   // creates a div element
-					 .attr("id", "resetButton")
-					 .attr("title", "Reset the palette")
-					 .addClass("button orange newcolor")   // add a class
-					 .html('<div><img src="/blog/wp-includes/images/reset.png"></div>');
-	$("#paletteUI").append("<br><br>");
-	$("#paletteUI").append($newDiv);
+	$("#resetButton").attr("title", "Reset the palette");	
 	$("#resetButton").mousedown(resetPalette);
 	$("#resetButton").hide();	
 	 	
 	// create the flickr share dialog box for popping up when the user clicks the share button
 	$newDiv = $("<div/>")
 					.attr("id", "flickrShare")
-					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input class="dialogbox" type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" class="dialogbox" rows="3" name="description">Created with Play Crafts Palette Builder. http://www.play-crafts.com/</textarea></form></div>');
+					.html('<div align=center><canvas id="flickrImg" width=300 height=250></canvas><br><br><form id="flickrForm"><label for="title">Title</label><input class="dialogbox" type="text" id="title" name="title" value="My palette"><br><label for="description">Description</label><textarea id="description" class="dialogbox" rows="3" name="description">Created with Play Crafts Palette Builder. http://www.play-crafts.com/blog/palettebuilder2/</textarea></form></div>');
 	$("#paletteUI").append($newDiv);
-	$("#flickrShare").dialog({ width: 600, resizable: false, modal: true, position: 'center', closeText: 'x', title: 'Share to flickr', autoOpen: false,
+	$("#flickrShare").dialog({ width: 600, resizable: false, modal: true, position: 'center', stack: false, 'z-index':120, closeText: 'x', title: 'Share to flickr', autoOpen: false,
 	         buttons: { "Cancel": function() { $(this).dialog("close"); }, "Share": flickrShare } 
 	         });
+	         
+	//dropdown stuff
+	$(".matchwhat").click(function()
+	{
+		$(this).css('box-shadow', "none");
+		var X=$(this).attr('id');
+		if(X==1)
+		{
+			$(".submenu").hide();
+			$(this).attr('id', '0'); 
+		}
+		else
+		{
+			$(".submenu").show();
+			$(this).attr('id', '1');
+		}
+	
+	});
+	
+	//Mouse click on sub menu
+	$(".submenu").mouseup(function(){
+		$(this).css({ boxShadow: '0 1px 4px rgba(0, 0, 0, 0.45)' });
+		$(".submenu").hide();
+		$(".matchwhat").attr('id', '');
+	});
+	$('#root li').click(function(){
+		matching = $(this).attr('id');
+		$.cookie('matchwhat', matching, { expires: 365 });
+		if (matching === "hex")
+			$('.matchwhat').text("Match: Hex Values");
+		else
+			$('.matchwhat').text("Match: Kona Cottons");
+		drawColorMatch();
+	});
+	
+	matching = $.cookie('matchwhat');
+	if (matching == undefined)
+		matching = "kona";
+		
+	if (matching === "hex")
+		$('.matchwhat').text("Match: Hex Values");
+	else
+		$('.matchwhat').text("Match: Kona Cottons");
+
+	//Mouse click on Match link
+	$(".matchwhat").mouseup(function(){
+		$(this).css({ boxShadow: '0 1px 4px rgba(0, 0, 0, 0.45)'});
+		$(".submenu").hide();
+		$(".matchwhat").attr('id', '');
+	});
+	
+	
+	//Document Click
+	$(document).mouseup(function(){
+		$(this).css({ boxShadow: '0 1px 4px rgba(0, 0, 0, 0.45)'});
+		$(".submenu").hide();
+		$(".matchwhat").attr('id', '');
+	});
+	
+	// save whether info with palette is checked or not
+	$('#SaveMatch').click(function() {
+		saveMatching = $(this).is(':checked');
+		$.cookie('saveMatching', saveMatching, { expires: 365 });
+	});
+	
+	saveMatching = ($.cookie('saveMatching') == 'true');
+	if (saveMatching === undefined)
+		saveMatching = true;
+		
+	$('#SaveMatch').prop('checked', saveMatching);
+}
+
+function addCircleHoverEffects() {
+	var paletteNum = $(this).attr('id').substr($(this).attr('id').length-1);
+	$(this).addClass("Hover");
+	$("#palette"+paletteNum).addClass("Hover");
+	$("#palette"+paletteNum).css("border-color", $("#palette"+paletteNum).css("backgroundColor"));
+	
+	// account for circle biggerness
+	$(this).css("top", $(this).position().top - 2 + "px");
+	$(this).css("left", $(this).position().left - 2 + "px");
+	
+}
+
+function addPaletteHoverEffects() {
+	var paletteNum = $(this).attr('id').substr($(this).attr('id').length-1);
+	$(this).addClass("Hover");
+	$(this).css("border-color", $(this).css("backgroundColor"));
+	$("#remColor"+paletteNum).show();
+	$("#circle"+paletteNum).addClass("Hover");
+	
+	// account for circle biggerness
+	$("#circle"+paletteNum).css("top", $("#circle"+paletteNum).position().top - 2 + "px");
+	$("#circle"+paletteNum).css("left", $("#circle"+paletteNum).position().left - 2 + "px");
+	
+	// account for palette biggerness
+	$(this).css("top", $(this).position().top - 1 + "px");
+	$(this).css("left", $(this).position().left - 1 + "px");
+	
+}
+
+function removePaletteHoverEffects() {
+	var paletteNum = $(this).attr('id').substr($(this).attr('id').length-1);
+	$(this).removeClass("Hover");
+	$("#remColor"+paletteNum).hide();
+	$("#circle"+paletteNum).removeClass("Hover");
+	
+	// account for circle biggerness
+	$("#circle"+paletteNum).css("top", $("#circle"+paletteNum).position().top + 2 + "px");
+	$("#circle"+paletteNum).css("left", $("#circle"+paletteNum).position().left + 2 + "px");
+		
+}
+
+function removeCircleHoverEffects() {
+	$(this).removeClass("Hover");
+	$("#palette"+this.id.substr(this.id.length-1)).removeClass("Hover");
+	
+	// account for circle biggerness
+	$(this).css("top", $(this).position().top + 2 + "px");
+	$(this).css("left", $(this).position().left + 2 + "px");
 }
 
 function remColor() {
@@ -197,19 +313,82 @@ function resetPalette() {
 }
 
 function createImage() {
-	// draw the palette into the canvas
-	ctx.fillStyle = "white";
-	ctx.fillRect(0, uiFrame.height - paletteDiv[0].height() - paletteSpacing, uiFrame.width, paletteDiv[0].height()+paletteSpacing);
 	
+	var curctx = ctx;
+	var curFrame = uiFrame;
+	
+	// if we need to save the matching info, draw the elements
+	if (saveMatching)
+	{
+		curctx = ctxMatch;
+		curFrame = uiFrameMatch;
+	}
+	
+	// palette needs to be drawn first so that it doesn't cover the bottom part of the matching area with a white box
+	
+	// draw the palette into the canvas
+	// clear palette area
+	curctx.fillStyle = "white";
+	curctx.fillRect(0, curFrame.height - paletteDiv[0].height() - paletteSpacing, curFrame.width, paletteDiv[0].height()+paletteSpacing);
+
 	for (i=0; i<paletteSize; i++)
 	{
-		ctx.fillStyle = paletteDiv[i].css("backgroundColor");
+		curctx.fillStyle = paletteDiv[i].css("backgroundColor");
 		var rx = i * (paletteDiv[i].width() + bufferDiv[i].width());
-		var ry = uiFrame.height - paletteDiv[i].height();
+		var ry = curFrame.height - paletteDiv[i].height();
 		var rw = paletteDiv[i].width();
 		var rh = paletteDiv[i].height();
-		ctx.fillRect(rx, ry, rw, rh);
+		curctx.fillRect(rx, ry, rw, rh);
 	}
+
+	if (saveMatching)
+	{
+		// draw color match information
+		// draw white background in color match area
+		curctx.fillStyle = "white";
+		curctx.fillRect(img.width, 0, $('#colorMatch').width() + paletteSpacing, curFrame.height);
+
+		for (i=0; i<paletteSize; i++)
+		{
+			var fontHeight = 20;
+			var rx = img.width + paletteSpacing;
+			var ry = i * (hexDivSize + paletteSpacing) + fontHeight + paletteSpacing;
+			var rw = hexDivSize;
+			var rh = hexDivSize;
+	
+			// write what thing we've matched to
+			curctx.fillStyle="#000000";
+			curctx.font="10pt Calibri, arial, helvetica, sans-serif";
+			curctx.fillText($('.matchwhat').text(), rx, fontHeight-paletteSpacing);
+	
+			// if it's a hex value, we need to draw the color in a box
+			if (matching === "hex") {
+				curctx.fillStyle = $("#hex"+i).css("backgroundColor");
+				curctx.fillRect(rx, ry, rw, rh);			
+			}
+			// otherwise we need to draw the image in that div
+			else {
+				// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
+				// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
+				// compliant by then.
+				// 0-pad if necessary
+				var hexred = ("00" + parseInt(kona[i]["red"]).toString(16)).substr(-2);
+				var hexgreen = ("00" + parseInt(kona[i]["green"]).toString(16)).substr(-2);
+				var hexblue = ("00" + parseInt(kona[i]["blue"]).toString(16)).substr(-2);
+				curctx.fillStyle = "#" + hexred + hexgreen + hexblue;
+				curctx.fillRect(rx, ry, rw, rh);
+				//ctx.drawImage($("#matched"+i).get(0), rx, ry, hexDivSize, hexDivSize);
+			}
+			// draw text for each element
+			var labelx = rx + rw + paletteSpacing;
+			var labely = ry + hexDivSize/2; // to center text
+			// regular expression crap to get just the label, label is everything after the image tag if there is one
+			curctx.fillStyle = "#000000";
+			var label = $("#matchColor"+i).text();
+			curctx.fillText(label, labelx, labely);
+			
+		}
+	} 
 }
 
 function popup(url) {
@@ -218,6 +397,9 @@ function popup(url) {
 	var left = (screen.width/2)-(width/2);
 	var top = (screen.height/2)-(height/2);
 	newWindow = window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
+	newWindow.onload = function () {
+		makeForm();
+	}
 	newWindow.onbeforeunload = function () {
 		// if the popup is closed, we should close our dialog as well
 		$('#flickrShare').dialog("close");
@@ -231,13 +413,19 @@ function shareImage() {
 	// Open pop-up immediately to minimize chances of pop-up blocker throwing a fit
 	$('#flickrShare').dialog("open");
 	
-	//popup(url);
 	createImage();
+	var flickrWidth = uiFrame.width;
+	var flickrHeight = uiFrame.height;
+	if (saveMatching)
+	{
+		flickrWidth = uiFrameMatch.width;
+		flickrHeight = uiFrameMatch.height;
+	}
 	var flickrCtx = document.getElementById("flickrImg").getContext('2d');
 	flickrCtx.clearRect(0, 0, $('#flickrImg').width(), $('#flickrImg').height());
 	
-	var widthScale = $('#flickrImg').width() / uiFrame.width;
-	var heightScale = $('#flickrImg').height() / uiFrame.height;
+	var widthScale = $('#flickrImg').width() / flickrWidth;
+	var heightScale = $('#flickrImg').height() / flickrHeight;
 	var flickrScale = 1;
 	
 	// if the scale factor is less than 1 for either width or height, the image is bigger than the area it's going
@@ -252,15 +440,29 @@ function shareImage() {
 	}
 	
 	flickrCtx.fillStyle="white";
-	flickrCtx.fillRect(0,0,flickrScale * uiFrame.width, flickrScale * uiFrame.height);
-	flickrCtx.drawImage(uiFrame, 0, 0, flickrScale * uiFrame.width, flickrScale * uiFrame.height);
+	flickrCtx.fillRect(0,0,flickrScale * flickrWidth, flickrScale * uiFrame.height);
+	if (saveMatching)
+		flickrCtx.drawImage(uiFrameMatch, 0, 0, flickrScale * flickrWidth, flickrScale * uiFrameMatch.height);
+	else
+		flickrCtx.drawImage(uiFrame, 0, 0, flickrScale * flickrWidth, flickrScale * uiFrame.height);
 }
 
-function flickrShare() {
-	var data = uiFrame.toDataURL('image/png');
-	var url = 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/upload-test.php';
+function makeForm() {
+	var data;
+	if (saveMatching)
+		data = uiFrameMatch.toDataURL('image/png');
+	else
+		data = uiFrame.toDataURL('image/png');
+	var url = "http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/upload.php";
+
+	// add this stuff to the popup window, create iFrame
+	var iframe = document.createElement('iframe');
+	iframe.style.display = "none";
+	newWindow.document.body.appendChild(iframe);
 	
-	popup('about:blank');
+	// Get the iframe's document
+	var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	
 	var form = document.createElement("form");
 	form.setAttribute("method", "post");
 	form.setAttribute("action", url);
@@ -287,8 +489,14 @@ function flickrShare() {
 	
 	form.appendChild(hiddenField);
 	
-	document.body.appendChild(form);
+	(iframeDoc.body || iframeDoc).appendChild(form);
 	form.submit();
+	
+}
+
+
+function flickrShare() {
+	popup("http://www.play-crafts.com/loading.html");
 	
 }
 
@@ -299,8 +507,11 @@ function feedback() {
 
 function saveImage() {
 	createImage();
-	
-	var data = uiFrame.toDataURL('image/png');
+	var data;
+	if (saveMatching)
+		data = uiFrameMatch.toDataURL('image/png');
+	else
+		data = uiFrame.toDataURL('image/png');
 	var url = 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/savefile.php';
 	
 //	window.location = uiFrame.toDataURL('image/png');
@@ -402,20 +613,23 @@ function addColor() {
 // move the circle to where the mouse on mousemove
 function moveCircle(event, ui) {
 	// find current x,y of div
-	var circleID = this.id.substr(this.id.length-1);
+	var circleID = $(this).attr('id').substr($(this).attr('id').length-1);
 	var circleX = Math.round(ui.position.left - img.offsetLeft + circleDiv[circleID].width()/2);
 	var circleY = Math.round(ui.position.top - img.offsetTop + circleDiv[circleID].width()/2);
 
 	// figure out what color pixel the circle is over
 	var pixelNum = (circleY * img.width + circleX) * 4;
 	var color = "rgba(" + imgData.data[pixelNum] + "," + imgData.data[pixelNum+1] + "," + imgData.data[pixelNum+2] + ")";
-
+		
 	// change div background to the appropriate color
-	$(ui.helper).css({backgroundColor: color});
+	$(this).css({backgroundColor: color});
+	$("#palette"+circleID).css("border-bottom-color", $(this).css("background-color"));
+	$("#palette"+circleID).addClass("Hover");
 	var paletteColorIdx = circleID; // paletteCircles[circleID].palette;
 	palette[paletteColorIdx].r = imgData.data[pixelNum];
 	palette[paletteColorIdx].g = imgData.data[pixelNum+1];
 	palette[paletteColorIdx].b = imgData.data[pixelNum+2];
+
 	var Lab = rgb2lab(palette[paletteColorIdx]);
 	palette[paletteColorIdx].CIEL = Lab.CIEL;
 	palette[paletteColorIdx].CIEa = Lab.CIEa;
@@ -448,48 +662,75 @@ function drawColorMatch(indexColor) {
 		startNum = parseInt(indexColor);
 		endNum = startNum+1;
 	}
-	// for each color
-	for (var i=startNum; i<endNum; i++)
+	switch (matching)
 	{
-		(function (i)
+		case "hex":
+		for (var i=startNum; i<endNum; i++)
 		{
-			var paletteL = palette[i].CIEL;
-			var palettea = palette[i].CIEa;
-			var paletteb = palette[i].CIEb;
-			
 			matchDiv[i].show();
 			matchDiv[i].html("");
-			// find closest matching solid fabric
-			$.ajax({
-			  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
-			  type: 'GET',
-			  data: {
-			  	CIEL: paletteL,
-			  	CIEa: palettea,
-			  	CIEb: paletteb
-			  },
-			  
-			  complete: function(xhr, status) {
-				  if (status === 'error' || !xhr.responseText) {
-				       alert("error: " + xhr.responseText);
-				  }
-				  else {
-				  	var data = jQuery.parseJSON(xhr.responseText);
-				  	for (var j=0 ; j < data.length; j+=2)
-				  	{
-				  		//add the image and the name
-				  		if (j > 1)
-				  		{
-				  			matchDiv[i].append(" or ");
-				  		}
-				  		matchDiv[i].append("<img style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\"> Kona " + data[j+1].replace(/_/g," "));
-				    }
-					matchDiv[i].append("<BR>");
-				  }
-			  } 
-			});		
-		})(i);
+			// draw a square of the color
+			// print out hex value
+			var rgb = $("#palette"+i).css("backgroundColor");
+			matchDiv[i].html("<div id='hex" + i + "' style='float: left; background-color: " + rgb + "; height: " + hexDivSize + "px; width: " + hexDivSize + "px;'>&nbsp;</div>");
+			rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+			function hex(x) {
+			    return ("0" + parseInt(x).toString(16)).slice(-2);
+			}
+			matchDiv[i].append("&nbsp;&nbsp;#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]));
+		}
+		break;
+		case "kona":
+		// for each color
+		for (var i=startNum; i<endNum; i++)
+		{
+			(function (i)
+			{
+				var paletteL = palette[i].CIEL;
+				var palettea = palette[i].CIEa;
+				var paletteb = palette[i].CIEb;
+				
+				matchDiv[i].show();
+				matchDiv[i].html("");
+				// find closest matching solid fabric
+				$.ajax({
+				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
+				  type: 'GET',
+				  data: {
+				  	CIEL: paletteL,
+				  	CIEa: palettea,
+				  	CIEb: paletteb
+				  },
+				  
+				  complete: function(xhr, status) {
+					  if (status === 'error' || !xhr.responseText) {
+					       alert("error: " + xhr.responseText);
+					  }
+					  else {
+					  	var data = jQuery.parseJSON(xhr.responseText);
+					  	for (var j=0 ; j < data.length; j+=3)
+					  	{
+					  		//add the image and the name
+					  		if (j > 1)
+					  		{
+					  			matchDiv[i].append(" or ");
+					  		}
+					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\"> Kona " + data[j+1].replace(/_/g," "));
+					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
+					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
+					  		// compliant by then.
+					  		kona[i] = data[j+2];
+					  		
+					    }
+						matchDiv[i].append("<BR>");
+					  }
+				  } 
+				});		
+			})(i);
+		}
+		break;
 	}
+	
 	for (i=paletteSize; i<maxPaletteSize; i++)
 	{
 		matchDiv[i].hide();
@@ -521,7 +762,7 @@ function drawCircles() {
 }
 
 function drawPalette() {
-	var colorWidth = Math.round(((uiFrame.width) - (paletteSpacing*(paletteSize -1)))/paletteSize);
+	var colorWidth = Math.round(((img.width) - (paletteSpacing*(paletteSize -1)))/paletteSize);
 
 	// update colors in the divs
 	for (i=0; i<paletteSize; i++)
@@ -582,6 +823,8 @@ function loadImage(evt) {
 			img.onload = function () {
 				uiFrame.width = initialWidth;
 				uiFrame.height = initialHeight;
+				uiFrameMatch.width = initialWidth;
+				uiFrameMatch.height = initialHeight;
 				// We need to figure out if the image is too big to fit in the area it's being drawn to
 				// Figure out how much the width and height of the image would need to be scaled by to fit
 				// 1 or above means the image fits exactly or is smaller than the canvas area
@@ -599,27 +842,31 @@ function loadImage(evt) {
 					imgScale = 1;
 				}
 
-				// check if the user is doing a mousedown over the image so we can see if they are
-				// clicking onto a palette circle
-//                uiFrame.addEventListener('mousedown', findCircle);
-			   // paletteFrame.addEventListener('click', paletteUI);
-
 				// draw the image using the scales we've calculate, or 1 if the image wasn't too big
 				// clear the canvas first so we're not drawing a bunch of images on top of each other
 				ctx.clearRect(0, 0, uiFrame.width, uiFrame.height);
 				ctx.fillStyle="ffffff";
 				ctx.fillRect(0,0,uiFrame.width, uiFrame.height);
+				ctxMatch.clearRect(0, 0, uiFrameMatch.width, uiFrameMatch.height);
+				ctxMatch.fillStyle = "ffffff";
+				ctxMatch.fillRect(0, 0, uiFrameMatch.width, uiFrameMatch.height);
+				
 				if (imgFrame.lastChild)
 					imgFrame.removeChild(imgFrame.lastChild);
 
 				// scale the uiFrame to match the picture
 				img.width = imgScale * img.width;
 				img.height = imgScale * img.height;
-				uiFrame.width = img.width;
 				// we add the height of the palette here because when we save the image, we draw the palette into this canvas
 				// resizing it later causes it to clear the canvas which means we would have to redraw the image as well
 				uiFrame.height = img.height + paletteSpacing + paletteDiv[0].height();
+				uiFrameMatch.height = uiFrame.height;
+				// we add the width of the matching div here because when we save the image, we draw the 
+				// matching stuff into the canvas. 
+				uiFrame.width = img.width;
+				uiFrameMatch.width = img.width + paletteSpacing + $('#colorMatch').width();
 				ctx.drawImage(img, 0, 0, img.width, img.height);
+				ctxMatch.drawImage(img, 0, 0, img.width, img.height);
 				img.style.cssText = 'height:' + img.height + "px !important;" + 'width:' + img.width + "px !important;";
 
 				imgFrame.style.width = img.width + "px";
@@ -667,6 +914,9 @@ function loadImage(evt) {
 				// make a copy of the paletteCircles in case we need to reset
 				initialCircles = clone(paletteCircles);
 
+				// set palette frame width
+				// The 3*paletteSpacing is so when the new color button disappears, there's room for the reload button and it doesn't get pushed to the bottom. Probably better to just have a deactivated new color button. Someday. TODO
+				$('#paletteFrame').width($('#imgFrame').width() + (3 * paletteSpacing) + $('#newColor').outerWidth());
 				// draw the circles and palette
 				drawCircles();
 				drawPalette();
@@ -684,10 +934,11 @@ function loadImage(evt) {
 			  // change where colorMatch div is drawn based on size of image canvas
 			  $("#colorMatch").css({
 			  		'top': imgFrame.offsetTop + "px",
-			  		'width': '300px',
+			  		'width': '200px',
 			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 45 + "px",
 			  		'height': uiFrame.height + "px"
 			  });
+			  
 			  drawColorMatch();		  
 			}; 
 			

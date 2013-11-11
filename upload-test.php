@@ -4,12 +4,16 @@ session_start();
 
 // Require the phpFlickr API
 require_once('phpFlickr-3.1/phpFlickr.php');
-$data = $_POST['base64data'];
-$description = $_POST['description'];
-$title = $_POST['title'];
+if( isset($_POST['base64data']) )
+	$data = $_POST['base64data'];
+if( isset($_POST['description']) )
+	$description = $_POST['description'];
+if( isset($_POST['title']) )
+	$title = $_POST['title'];
 set_time_limit(60);
 
-if ($data) {
+if (isset($data)) {
+	// omg why is there a +5 here??!? I have no clue. :(
 	$ourtime = time() + 5;
 	$image = explode('base64,',$data);
     file_put_contents('temp/img' . $ourtime . '.png', base64_decode($image[1]));
@@ -31,32 +35,36 @@ if(empty($_GET['frob'])) {
 else {
     // Get the FROB token, refresh the page;  without a refresh, there will be "Invalid FROB" error
     $flickr->auth_getToken($_GET['frob']);
-    header('Location: upload.php');
+    header('Location: upload-test.php');
     exit();
 }
 
 // Send an image sync_upload(photo, title, desc, tags)
 // The returned value is an ID which represents the photo
-echo "Uploading image... (this may take a few moments.)<br>";
-if ($title === NULL)
+echo "<div id='pblogo'><img src='http://www.play-crafts.com/blog/wp-includes/images/palettebuilderlogosm.png'></div><BR>";
+echo "<p>Connecting to flickr...</p>";
+
+if (!isset($title))
 	$title = $_COOKIE['title'];
-if ($description === NULL)
+if (!isset($description))
 	$description = $_COOKIE['description'];
-if ($ourtime === NULL)
+if (!isset($ourtime))
 	$ourtime = $_COOKIE['ourtime'];
-	
-$result = $flickr->sync_upload('temp/img' . $ourtime .'.png', $title, $description, 'playcrafts, palette, palette builder');
-echo "Image uploaded!<br>";
-unlink('temp/img' . $ourtime . '.png');
+
+if (file_exists('temp/img'.$ourtime.'.png')) 
+{
+	$result = $flickr->sync_upload('temp/img' . $ourtime .'.png', $title, $description, 'playcrafts, palette, palette builder');
+	echo "<p>Image uploaded!<br></P>";
+	unlink('temp/img' . $ourtime . '.png');
+}
+else {
+	echo "<p>There was an error sharing your photo with Flickr. Please try again.</p>";
+}
 ?>
 <br>
 <link href="http://www.play-crafts.com/blog/wp-includes/css/pb.css" rel="stylesheet" type="text/css" />
 <form>
 <input type="button" class="button orange" value="Close Window" onClick="window.close()">
 </form>
-<?php
-return $result;
-
-?>
 
 
