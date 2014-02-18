@@ -50,12 +50,6 @@ function startApp() {
 	// hide until an image is loaded
 	shareButton.hide();
 
-	// setup for the feedback button
-	$("#feedback").mousedown(feedback);
-	$("#feedback").attr("title", "Send us feedback about Palette Builder");
-	// hide until an image is loaded
-	$("#feedback").hide();
-	
 	// setup for the save button
 	var saveButton = $("#saveImage");
 	saveButton.mousedown(saveImage);
@@ -145,6 +139,19 @@ function startApp() {
 		
 	} // end for each color loop
 	
+	// create div at the end of the matching stuff to put purchase button
+	var $newDiv = $("<div/>")
+		.html('<br><p style="font-size:10px">We have partnered with Harts Fabrics to bring you custom fabric bundles based on your palette!</p><div id="buyNowButton" class="orange button">Purchase Bundle</div>')
+		.attr("id", "purchase");
+	$("#colorMatch").append($newDiv);
+	$newDiv.hide();
+
+	// setup for buy now button
+	var buyButton = $("#buyNowButton");
+	buyButton.mousedown(buyNow);
+	buyButton.attr("title", "Buy custom Kona bundle based on your palette through Harts Fabric");
+	
+
 	$("#colorMatch").hide();
 	
 	$("#resetButton").attr("title", "Reset the palette");	
@@ -391,21 +398,24 @@ function createImage() {
 	} 
 }
 
-function popup(url) {
-	var width = 500;
-	var height = 400;
+function newWindow(url, width, height)
+{
+	if (typeof(width) === "undefined")
+		width = 500;
+	if (typeof(height) === "undefined")
+		height = 400;
 	var left = (screen.width/2)-(width/2);
 	var top = (screen.height/2)-(height/2);
-	newWindow = window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
-	newWindow.onload = function () {
-		makeForm();
-	}
-	newWindow.onbeforeunload = function () {
-		// if the popup is closed, we should close our dialog as well
-		$('#flickrShare').dialog("close");
-	}
-	if (window.focus) {newWindow.focus()}
-	return false;
+	return window.open(url);
+}
+function popup(url, width, height) {
+	if (typeof(width) === "undefined")
+		width = 500;
+	if (typeof(height) === "undefined")
+		height = 400;
+	var left = (screen.width/2)-(width/2);
+	var top = (screen.height/2)-(height/2);
+	return window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=yes, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
 }
 
 function shareImage() {
@@ -494,10 +504,27 @@ function makeForm() {
 	
 }
 
+function buyNow() {
+	var url = "http://www.hartsfabric.com/custbund.html?";
+	url = url + "numColors=" + paletteSize;
+	for (var i=0; i<paletteSize; i++)
+	{
+		url = url + "&kona" + i + "=" + kona[i]["name"];
+	}
+	url = encodeURI(url);
+	popup(url, 800, 600);
+}
 
 function flickrShare() {
-	popup("http://www.play-crafts.com/loading.html");
-	
+	newWindow = popup("http://www.play-crafts.com/loading.html");
+	newWindow.onload = function () {
+		makeForm();
+	}
+	newWindow.onbeforeunload = function () {
+		// if the popup is closed, we should close our dialog as well
+		$('#flickrShare').dialog("close");
+	}
+	if (window.focus) {newWindow.focus()};
 }
 
 function feedback() {
@@ -679,6 +706,8 @@ function drawColorMatch(indexColor) {
 			}
 			matchDiv[i].append("&nbsp;&nbsp;#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]));
 		}
+		$("#buyNowButton").hide();	
+		$("#purchase").hide();	
 		break;
 		case "kona":
 		// for each color
@@ -720,6 +749,7 @@ function drawColorMatch(indexColor) {
 					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
 					  		// compliant by then.
 					  		kona[i] = data[j+2];
+					  		kona[i]["name"] = data[j+1].replace(/_/g," ");
 					  		
 					    }
 						matchDiv[i].append("<BR>");
@@ -728,6 +758,8 @@ function drawColorMatch(indexColor) {
 				});		
 			})(i);
 		}
+		$("#buyNowButton").show();
+		$("#purchase").show();
 		break;
 	}
 	
@@ -922,14 +954,18 @@ function loadImage(evt) {
 				drawPalette();
 
 			  // move the load image button down below the picture
-			  $("#loadImage").css({"position": "static"});
+			  $("#loadImage").css({"position": "relative"});
+			  $("#loadImage").css({"left": "0px"});
+			  $("#loadImage").css({"top": "0px"});
+			  $("#loadImage").css({"display": "inline-block"});
+			  
 			  
 			  // show all the stuff that's been hidden
 			  $("#shareImage").show();
 			  $("#saveImage").show();
-			  $("#feedback").show();
 			  $("#colorMatch").show();
 			  $("#resetButton").show();
+			  $("#purchase").show();
 	
 			  // change where colorMatch div is drawn based on size of image canvas
 			  $("#colorMatch").css({

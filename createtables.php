@@ -57,7 +57,40 @@ function create_tables($con)
 	else {
 	        echo "fabric-color table error!! " . mysqli_error();  
 	}
-	// one table for each reference color: table for each reference color: color id, distance to
+	
+	// thread table (id - unique, sku, name, manufacturer, filename, url)
+	$sql="CREATE TABLE IF NOT EXISTS thread
+		(
+			id INT NOT NULL AUTO_INCREMENT,
+			sku INT NOT NULL,
+			name VARCHAR(100),
+			manufacturer VARCHAR(100),
+			filename VARCHAR(100) NOT NULL,
+			url VARCHAR(100) NOT NULL,
+			PRIMARY KEY(id)
+		)";
+	$result = mysqli_query($con, $sql);
+	if ($result) {
+		echo "Thread table was created if needed.<br>";
+	}
+	else {
+	        echo "thread table error!! " . mysqli_error();  
+	}
+	// threadcolor table (id - unique, color)
+	$sql="CREATE TABLE IF NOT EXISTS threadcolor
+		(
+			id INT NOT NULL,
+			color INT NOT NULL,
+			PRIMARY KEY(id)
+		)";
+	$result = mysqli_query($con, $sql);
+	if ($result) {
+		echo "Threadcolor table was created if needed.<br>";
+	}
+	else {
+	        echo "threadcolor table error!! " . mysqli_error();  
+	}
+/*	// one table for each reference color: table for each reference color: color id, distance to
 	// reference color
 	$CIEL = 0;
 	$CIEa = 0;
@@ -87,6 +120,7 @@ function create_tables($con)
 			}
 		}
 	}
+	*/
 }
 
 // Check connection
