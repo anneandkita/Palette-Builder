@@ -50,6 +50,12 @@ function startApp() {
 	// hide until an image is loaded
 	shareButton.hide();
 
+	// setup for the feedback button
+	$("#feedback").mousedown(feedback);
+	$("#feedback").attr("title", "Send us feedback about Palette Builder");
+	// hide until an image is loaded
+	$("#feedback").hide();
+	
 	// setup for the save button
 	var saveButton = $("#saveImage");
 	saveButton.mousedown(saveImage);
@@ -138,20 +144,8 @@ function startApp() {
 		matchDiv[i].hide();
 		
 	} // end for each color loop
+	$("#colorMatch").css({'width': '250px'});
 	
-	// create div at the end of the matching stuff to put purchase button
-	var $newDiv = $("<div/>")
-		.html('<br><p style="font-size:10px">We have partnered with Harts Fabrics to bring you custom fabric bundles based on your palette!</p><div id="buyNowButton" class="orange button">Purchase Bundle</div>')
-		.attr("id", "purchase");
-	$("#colorMatch").append($newDiv);
-	$newDiv.hide();
-
-	// setup for buy now button
-	var buyButton = $("#buyNowButton");
-	buyButton.mousedown(buyNow);
-	buyButton.attr("title", "Buy custom Kona bundle based on your palette through Harts Fabric");
-	
-
 	$("#colorMatch").hide();
 	
 	$("#resetButton").attr("title", "Reset the palette");	
@@ -196,8 +190,11 @@ function startApp() {
 		$.cookie('matchwhat', matching, { expires: 365 });
 		if (matching === "hex")
 			$('.matchwhat').text("Match: Hex Values");
-		else
+		else if (matching === "kona")
 			$('.matchwhat').text("Match: Kona Cottons");
+		else {
+			$('.matchwhat').text("Match: Aurifil Threads");
+		}
 		drawColorMatch();
 	});
 	
@@ -207,8 +204,11 @@ function startApp() {
 		
 	if (matching === "hex")
 		$('.matchwhat').text("Match: Hex Values");
-	else
+	else if (matching === "kona")
 		$('.matchwhat').text("Match: Kona Cottons");
+	else {
+		$('.matchwhat').text("Match: Aurifil Threads");
+	}
 
 	//Mouse click on Match link
 	$(".matchwhat").mouseup(function(){
@@ -373,6 +373,10 @@ function createImage() {
 				curctx.fillStyle = $("#hex"+i).css("backgroundColor");
 				curctx.fillRect(rx, ry, rw, rh);			
 			}
+			else if (matching === "aurifil") {
+				curctx.fillStyle = $("#hex"+i).css("backgroundColor");
+				curctx.fillRect(rx, ry, rw, rh);
+			}
 			// otherwise we need to draw the image in that div
 			else {
 				// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
@@ -398,24 +402,21 @@ function createImage() {
 	} 
 }
 
-function newWindow(url, width, height)
-{
-	if (typeof(width) === "undefined")
-		width = 500;
-	if (typeof(height) === "undefined")
-		height = 400;
+function popup(url) {
+	var width = 500;
+	var height = 400;
 	var left = (screen.width/2)-(width/2);
 	var top = (screen.height/2)-(height/2);
-	return window.open(url);
-}
-function popup(url, width, height) {
-	if (typeof(width) === "undefined")
-		width = 500;
-	if (typeof(height) === "undefined")
-		height = 400;
-	var left = (screen.width/2)-(width/2);
-	var top = (screen.height/2)-(height/2);
-	return window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=yes, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
+	newWindow = window.open(url, 'popup', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width='+width+', height='+height+', top='+top+', left='+left);
+	newWindow.onload = function () {
+		makeForm();
+	}
+	newWindow.onbeforeunload = function () {
+		// if the popup is closed, we should close our dialog as well
+		$('#flickrShare').dialog("close");
+	}
+	if (window.focus) {newWindow.focus()}
+	return false;
 }
 
 function shareImage() {
@@ -504,27 +505,10 @@ function makeForm() {
 	
 }
 
-function buyNow() {
-	var url = "http://www.hartsfabric.com/custbund.html?";
-	url = url + "numColors=" + paletteSize;
-	for (var i=0; i<paletteSize; i++)
-	{
-		url = url + "&kona" + i + "=" + kona[i]["name"];
-	}
-	url = encodeURI(url);
-	popup(url, 800, 600);
-}
 
 function flickrShare() {
-	newWindow = popup("http://www.play-crafts.com/loading.html");
-	newWindow.onload = function () {
-		makeForm();
-	}
-	newWindow.onbeforeunload = function () {
-		// if the popup is closed, we should close our dialog as well
-		$('#flickrShare').dialog("close");
-	}
-	if (window.focus) {newWindow.focus()};
+	popup("http://www.play-crafts.com/loading.html");
+	
 }
 
 function feedback() {
@@ -706,8 +690,56 @@ function drawColorMatch(indexColor) {
 			}
 			matchDiv[i].append("&nbsp;&nbsp;#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]));
 		}
-		$("#buyNowButton").hide();	
-		$("#purchase").hide();	
+		break;
+		case "aurifil":
+		// Anne: This is where you need to debug
+		for (var i=startNum; i<endNum; i++)
+		{
+			(function (i)
+			{
+				var paletteL = palette[i].CIEL;
+				var palettea = palette[i].CIEa;
+				var paletteb = palette[i].CIEb;
+				
+				matchDiv[i].show();
+				matchDiv[i].html("");
+				// find closest matching solid fabric
+				$.ajax({
+				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestThread.php',
+				  type: 'GET',
+				  data: {
+				  	CIEL: paletteL,
+				  	CIEa: palettea,
+				  	CIEb: paletteb
+				  },
+				  
+				  complete: function(xhr, status) {
+					  if (status === 'error' || !xhr.responseText) {
+					       alert("error: " + xhr.responseText);
+					  }
+					  else {
+					  	var data = jQuery.parseJSON(xhr.responseText);
+					  	for (var j=0 ; j < data.length; j+=3)
+					  	{
+					  		var rgb = data[j+2];
+					  		//add the image and the name
+					  		if (j > 1)
+					  		{
+					  			matchDiv[i].append(" or ");
+					  		}
+					  		var hexred = ("00" + parseInt(rgb["red"]).toString(16)).substr(-2);
+					  		var hexgreen = ("00" + parseInt(rgb["green"]).toString(16)).substr(-2);
+					  		var hexblue = ("00" + parseInt(rgb["blue"]).toString(16)).substr(-2);
+								
+							matchDiv[i].html("<div id='hex" + i + "' style='float: left; background-color: #" + hexred + hexgreen + hexblue + "; height: " + hexDivSize + "px; width: " + hexDivSize + "px;'>&nbsp;</div>");
+							matchDiv[i].append("&nbsp;" + data[j] + " - " + data[j+1]);
+					    }
+						matchDiv[i].append("<BR>");
+					  }
+				  } 
+				});		
+			})(i);
+		}
 		break;
 		case "kona":
 		// for each color
@@ -749,7 +781,6 @@ function drawColorMatch(indexColor) {
 					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
 					  		// compliant by then.
 					  		kona[i] = data[j+2];
-					  		kona[i]["name"] = data[j+1].replace(/_/g," ");
 					  		
 					    }
 						matchDiv[i].append("<BR>");
@@ -758,8 +789,6 @@ function drawColorMatch(indexColor) {
 				});		
 			})(i);
 		}
-		$("#buyNowButton").show();
-		$("#purchase").show();
 		break;
 	}
 	
@@ -954,23 +983,19 @@ function loadImage(evt) {
 				drawPalette();
 
 			  // move the load image button down below the picture
-			  $("#loadImage").css({"position": "relative"});
-			  $("#loadImage").css({"left": "0px"});
-			  $("#loadImage").css({"top": "0px"});
-			  $("#loadImage").css({"display": "inline-block"});
-			  
+			  $("#loadImage").css({"position": "static"});
 			  
 			  // show all the stuff that's been hidden
 			  $("#shareImage").show();
 			  $("#saveImage").show();
+			  $("#feedback").show();
 			  $("#colorMatch").show();
 			  $("#resetButton").show();
-			  $("#purchase").show();
 	
 			  // change where colorMatch div is drawn based on size of image canvas
 			  $("#colorMatch").css({
 			  		'top': imgFrame.offsetTop + "px",
-			  		'width': '200px',
+			  		'width': '250px',
 			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 45 + "px",
 			  		'height': uiFrame.height + "px"
 			  });

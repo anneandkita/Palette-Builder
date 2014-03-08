@@ -1,4 +1,66 @@
 <?php
+
+function RGBToLab($red, $green, $blue)
+{
+	// convert from 0-255 to 0-1
+	$var_R = ( $red / 255 );        //$red from 0 to 255
+	$var_G = ( $green / 255 );        //$green from 0 to 255
+	$var_B = ( $blue / 255 );        //$blue from 0 to 255
+	
+	// RGB to XYZ
+	
+	if ( $var_R > 0.04045 ) {
+		$var_R = pow((($var_R + 0.055)/1.055), 2.4);
+	} else {
+		$var_R = $var_R / 12.92;
+	}                  
+	if ( $var_G > 0.04045 ) {
+	 	$var_G = pow((($var_G + 0.055)/1.055), 2.4);
+	} else {
+		$var_G = $var_G / 12.92;
+	}
+	if ( $var_B > 0.04045 ) {
+		$var_B = pow((($var_B + 0.055)/1.055), 2.4);
+	} else {
+		$var_B = $var_B / 12.92;
+	}
+	
+	$var_R = $var_R * 100;
+	$var_G = $var_G * 100;
+	$var_B = $var_B * 100;
+	
+	//Observer. = 2°, Illuminant = D65
+	$X = $var_R * 0.4124 + $var_G * 0.3576 + $var_B * 0.1805;
+	$Y = $var_R * 0.2126 + $var_G * 0.7152 + $var_B * 0.0722;
+	$Z = $var_R * 0.0193 + $var_G * 0.1192 + $var_B * 0.9505;
+	
+	// XYZ to Lab
+	$var_X = $X / 95.047;          //ref_X =  95.047   Observer= 2°, Illuminant= D65
+	$var_Y = $Y / 100.0;          //ref_Y = 100.000
+	$var_Z = $Z / 108.883;          //ref_Z = 108.883
+	
+	if ( $var_X > 0.008856 ) {
+		$var_X = pow($var_X, 1.0/3.0);
+	} else {
+		$var_X = (7.787 * $var_X) + (16.0 / 116.0);
+	}
+	if ( $var_Y > 0.008856 ) {
+		$var_Y = pow($var_Y,1.0/3.0);
+	} else {
+		$var_Y = (7.787 * $var_Y) + (16.0 / 116.0);
+	}
+	if ( $var_Z > 0.008856 ) {
+		$var_Z = pow($var_Z, 1.0/3.0);
+	} else {
+		$var_Z = ( 7.787 * $var_Z ) + (16.0 / 116.0);
+	}
+	$CIEL = ( 116 * $var_Y ) - 16;
+	$CIEa = 500 * ( $var_X - $var_Y );
+	$CIEb = 200 * ( $var_Y - $var_Z );
+	
+	return array ($CIEL, $CIEa, $CIEb);
+}
+
 // Create connection
 $con=mysqli_connect("localhost", "root", "x41U5L30223Y92b", "fabricdb");
 
@@ -11,6 +73,163 @@ if (mysqli_connect_errno($con))
 }
 else 
 {
+	
+/*	// read in csv file with aurifil information
+	ini_set("auto_detect_line_endings", true);
+	$row = 1;
+	if (($handle = fopen("aurifil.csv", "r")) !== FALSE) {
+	    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+	        $num = count($data);
+	        echo "<p> $num fields in line $row:</p>\n";
+	        $row++;
+
+	        for ($c=0; $c < $num; $c++) {
+	            echo $data[$c] . "<br />\n";
+	        }
+*/
+// add white and black to aurifil table
+			// sku, manufacturer, name, r, g, b
+			$tableName = "thread";
+			$sku = 2024;
+			$man = "Aurifil Cotton Mako";
+			$name = "White";
+			$red = 255;
+			$green = 255;
+			$blue = 255;
+				        
+			// id (auto), sku, name, manufacturer, filename, url
+			$sql = "INSERT INTO $tableName (sku, name, manufacturer)
+				VALUES ($sku, '$name', '$man')";
+				
+			$result = mysqli_query($con, $sql);
+				
+			if ($result) {
+				echo "Thread inserted.<br>";
+			}
+			else {
+			        echo "thread table error!! " . mysqli_error($con);  
+			}
+			
+			$CIELab = RGBToLab($red, $green, $blue);
+				
+			// fill in threadcolor table
+			$tableName = "threadcolor";
+				
+			// get id
+			$sql = "SELECT * FROM thread WHERE sku=$sku";
+			$threadID = -1;
+			$result = mysqli_query($con, $sql) or die (mysqli_error($con));
+			while ($row = mysqli_fetch_array($result)) {
+				// list the fabrics we've found
+				$threadID = $row["id"];
+			}
+				
+			// threadcolor = id (fabric), color (rgbmunge)
+			$color = str_pad($red, 3, '0', STR_PAD_LEFT);
+			$color = $color . str_pad($green, 3, '0', STR_PAD_LEFT);
+			$color = $color . str_pad($blue, 3, '0', STR_PAD_LEFT);
+				
+			$sql = "INSERT INTO $tableName (id, color)
+						VALUES ($threadID, $color)";
+						
+			$result = mysqli_query($con, $sql);
+				
+			if ($result)
+				echo "Threadcolor inserted.<br>";
+			else {
+				echo "threadcolor table error!! " . mysqli_error($con);
+			}
+				
+			// fill in color table
+			$tableName = "color";
+				
+			// id (rgbmunge), red, green, blue, L, a, b
+			$sql = "INSERT IGNORE INTO $tableName 
+				   VALUES ($color, $red, $green, $blue, $CIELab[0], $CIELab[1], $CIELab[2])";
+				   
+			$result = mysqli_query($con, $sql);
+			if ($result)
+				echo "color inserted.<br>";
+			else {
+				echo "color table error!! " . mysqli_error($con);
+			}
+				
+			
+/*			// fill in aurifil table
+	        // sku, manufacturer, name, r, g, b
+	        $tableName = "thread";
+	        $sku = intval($data[0]);
+	        $man = $data[1];
+	        $name = $data[2];
+	        
+	        // id (auto), sku, name, manufacturer, filename, url
+			$sql = "INSERT INTO $tableName (sku, name, manufacturer)
+				VALUES ($sku, '$name', '$man')";
+				
+			$result = mysqli_query($con, $sql);
+				
+			if ($result) {
+				echo "Thread inserted.<br>";
+			}
+			else {
+			        echo "thread table error!! " . mysqli_error($con);  
+			}
+	    */
+	    /*
+			// calculate Lab from RGB values
+			$red = intval($data[3]);
+			$green = intval($data[4]);
+			$blue = intval($data[5]);
+			
+			$CIELab = RGBToLab($red, $green, $blue);
+			
+			// fill in threadcolor table
+			$tableName = "threadcolor";
+			
+			// get id
+			$sql = "SELECT * FROM thread WHERE sku=$data[0]";
+			$threadID = -1;
+			$result = mysqli_query($con, $sql) or die (mysqli_error($con));
+			while ($row = mysqli_fetch_array($result)) {
+				// list the fabrics we've found
+				$threadID = $row["id"];
+			}
+			
+			// threadcolor = id (fabric), color (rgbmunge)
+			$color = str_pad($red, 3, '0', STR_PAD_LEFT);
+			$color = $color . str_pad($green, 3, '0', STR_PAD_LEFT);
+			$color = $color . str_pad($blue, 3, '0', STR_PAD_LEFT);
+			
+			$sql = "INSERT INTO $tableName (id, color)
+					VALUES ($threadID, $color)";
+					
+			$result = mysqli_query($con, $sql);
+			
+			if ($result)
+				echo "Threadcolor inserted.<br>";
+			else {
+				echo "threadcolor table error!! " . mysqli_error($con);
+			}
+			
+			// fill in color table
+			$tableName = "color";
+			
+			// id (rgbmunge), red, green, blue, L, a, b
+			$sql = "INSERT IGNORE INTO $tableName 
+			   VALUES ($color, $red, $green, $blue, $CIELab[0], $CIELab[1], $CIELab[2])";
+			   
+			$result = mysqli_query($con, $sql);
+			if ($result)
+				echo "color inserted.<br>";
+			else {
+				echo "color table error!! " . mysqli_error($con);
+			}
+			
+		}
+
+	    fclose($handle);
+	}	
+	
 	// remove pomegranite
 	/*$tableName = "fabric";
 	$cid = 247;
@@ -143,8 +362,6 @@ else
 	WHERE id = $cid";
 	mysqli_query($con, $sql);
 	echo "color deleted";
-	*/
-	
 	
 	// add new color to color table
 	//pond
@@ -172,7 +389,7 @@ else
 	mysqli_query($con, $sql);
 
 	echo "pond updated<BR>";
-/*
+
 	// add new color to color table
 	//mango
 	$tableName = "color";

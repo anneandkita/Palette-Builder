@@ -144,6 +144,7 @@ function startApp() {
 		matchDiv[i].hide();
 		
 	} // end for each color loop
+	$("#colorMatch").css({'width': '250px'});
 	
 	$("#colorMatch").hide();
 	
@@ -189,8 +190,11 @@ function startApp() {
 		$.cookie('matchwhat', matching, { expires: 365 });
 		if (matching === "hex")
 			$('.matchwhat').text("Match: Hex Values");
-		else
+		else if (matching === "kona")
 			$('.matchwhat').text("Match: Kona Cottons");
+		else {
+			$('.matchwhat').text("Match: Aurifil Threads");
+		}
 		drawColorMatch();
 	});
 	
@@ -200,8 +204,11 @@ function startApp() {
 		
 	if (matching === "hex")
 		$('.matchwhat').text("Match: Hex Values");
-	else
+	else if (matching === "kona")
 		$('.matchwhat').text("Match: Kona Cottons");
+	else {
+		$('.matchwhat').text("Match: Aurifil Threads");
+	}
 
 	//Mouse click on Match link
 	$(".matchwhat").mouseup(function(){
@@ -365,6 +372,10 @@ function createImage() {
 			if (matching === "hex") {
 				curctx.fillStyle = $("#hex"+i).css("backgroundColor");
 				curctx.fillRect(rx, ry, rw, rh);			
+			}
+			else if (matching === "aurifil") {
+				curctx.fillStyle = $("#hex"+i).css("backgroundColor");
+				curctx.fillRect(rx, ry, rw, rh);
 			}
 			// otherwise we need to draw the image in that div
 			else {
@@ -680,6 +691,56 @@ function drawColorMatch(indexColor) {
 			matchDiv[i].append("&nbsp;&nbsp;#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]));
 		}
 		break;
+		case "aurifil":
+		// Anne: This is where you need to debug
+		for (var i=startNum; i<endNum; i++)
+		{
+			(function (i)
+			{
+				var paletteL = palette[i].CIEL;
+				var palettea = palette[i].CIEa;
+				var paletteb = palette[i].CIEb;
+				
+				matchDiv[i].show();
+				matchDiv[i].html("");
+				// find closest matching solid fabric
+				$.ajax({
+				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestThread.php',
+				  type: 'GET',
+				  data: {
+				  	CIEL: paletteL,
+				  	CIEa: palettea,
+				  	CIEb: paletteb
+				  },
+				  
+				  complete: function(xhr, status) {
+					  if (status === 'error' || !xhr.responseText) {
+					       alert("error: " + xhr.responseText);
+					  }
+					  else {
+					  	var data = jQuery.parseJSON(xhr.responseText);
+					  	for (var j=0 ; j < data.length; j+=3)
+					  	{
+					  		var rgb = data[j+2];
+					  		//add the image and the name
+					  		if (j > 1)
+					  		{
+					  			matchDiv[i].append(" or ");
+					  		}
+					  		var hexred = ("00" + parseInt(rgb["red"]).toString(16)).substr(-2);
+					  		var hexgreen = ("00" + parseInt(rgb["green"]).toString(16)).substr(-2);
+					  		var hexblue = ("00" + parseInt(rgb["blue"]).toString(16)).substr(-2);
+								
+							matchDiv[i].html("<div id='hex" + i + "' style='float: left; background-color: #" + hexred + hexgreen + hexblue + "; height: " + hexDivSize + "px; width: " + hexDivSize + "px;'>&nbsp;</div>");
+							matchDiv[i].append("&nbsp;" + data[j] + " - " + data[j+1]);
+					    }
+						matchDiv[i].append("<BR>");
+					  }
+				  } 
+				});		
+			})(i);
+		}
+		break;
 		case "kona":
 		// for each color
 		for (var i=startNum; i<endNum; i++)
@@ -934,7 +995,7 @@ function loadImage(evt) {
 			  // change where colorMatch div is drawn based on size of image canvas
 			  $("#colorMatch").css({
 			  		'top': imgFrame.offsetTop + "px",
-			  		'width': '200px',
+			  		'width': '250px',
 			  		'left': imgFrame.offsetLeft + imgFrame.offsetWidth + 45 + "px",
 			  		'height': uiFrame.height + "px"
 			  });

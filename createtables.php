@@ -65,8 +65,8 @@ function create_tables($con)
 			sku INT NOT NULL,
 			name VARCHAR(100),
 			manufacturer VARCHAR(100),
-			filename VARCHAR(100) NOT NULL,
-			url VARCHAR(100) NOT NULL,
+			filename VARCHAR(100),
+			url VARCHAR(100),
 			PRIMARY KEY(id)
 		)";
 	$result = mysqli_query($con, $sql);

@@ -12,12 +12,12 @@ if (mysqli_connect_errno($con))
 }
 else 
 {		
-	// TODO: This is currently assuming that only Konas are in the database. This will need to be modified/optimized when other fabrics are added
+	// TODO: This is currently assuming that only Aurifils are in the database. This will need to be modified/optimized when other threads are added
 	$CIEL = mysqli_real_escape_string($con, $_GET["CIEL"]);
 	$CIEa = mysqli_real_escape_string($con, $_GET["CIEa"]);
 	$CIEb = mysqli_real_escape_string($con, $_GET["CIEb"]);
 
-	$sql = "SELECT color FROM fabriccolor";
+	$sql = "SELECT color FROM threadcolor";
 	
 	$result = mysqli_query($con, $sql); // run the query and assign the result to $result
 	$distance = 99999999;
@@ -56,24 +56,24 @@ else
 		}
 	}
 	
-	// find the fabric that matches this color
-	$sql = "SELECT * FROM fabriccolor WHERE color=$closest";
+	// find the thread that matches this color
+	$sql = "SELECT * FROM threadcolor WHERE color=$closest";
 	$result = mysqli_query($con, $sql) or die (mysqli_error($con));
-	$fabrics = array();
+	$threads = array();
 	while ($row = mysqli_fetch_array($result)) {
-		// list the fabrics we've found
-		$fabrics[] = $row["id"];
+		// list the threads we've found
+		$threads[] = $row["id"];
 	}
 	
-	// get information about the matching fabrics
+	// get information about the matching threads
 	$returns = array();
-	foreach ($fabrics as $fabric)
+	foreach ($threads as $thread)
 	{
-		$sql = "SELECT * FROM fabric WHERE id=$fabric";
+		$sql = "SELECT * FROM thread WHERE id=$thread";
 		$result = mysqli_query($con, $sql) or die (mysqli_error($con));
 		
 		while ($row = mysqli_fetch_array($result)) {
-			$returns[] = $row["url"];
+			$returns[] = $row["sku"];
 			$returns[] = $row["name"];
 			$returns[] = $closestRGB;
 		}
