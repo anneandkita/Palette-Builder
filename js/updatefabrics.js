@@ -1,7 +1,109 @@
+var curFabric = 0;
+
 $(document).ready(startApp);
 
 function startApp() {
-	$("#process").click(processFiles);
+	// show first fabric
+	nextFabric();
+	$("#newid").click(updateID);
+	$("#ok").click(nextFabric);
+	$("#update").click(updateFabric);
+	$("#updatename").click(updateName);
+}
+
+function updateID() {
+	curFabric = $("#newidtext").val()-1;
+	nextFabric();
+}
+
+function nextFabric() {
+	curFabric++;
+	
+	$.ajax({
+		url: 'getFabricByID.php',
+		type: 'GET',
+		data: {
+			id: curFabric
+		},
+		complete: function(xhr, status) {
+			// show all the stuff
+			var data = jQuery.parseJSON(xhr.responseText);
+			
+			$("#fabricinfo").html(data[0] + ": " + data[2] + " " + data[1] + " - " + data[3]);
+			$("#rgb").html("red: " + data[4] + "<br>green: " + data[5] + "<br>blue: " + data[6] + "<br><br>");
+			$("#paletteColor").css("background-color", "rgb(" + data[4] + "," + data[5] + "," + data[6] + ")");
+				
+			$("#fabricname").val(data[1]);
+			var img = new Image();
+			var ctx = $("#imgFrame")[0].getContext("2d");
+			img.onload = function(){  // ...then set the onload handler...
+				ctx.canvas.height = img.height;
+				ctx.canvas.width = img.width;
+				ctx.drawImage(img,0,0);
+			}
+			img.src = data[3];	
+			$("#errorMessage").html("");		
+		}
+	});
+}
+
+function updateName() {
+	if ($("#fabricname").val() === "")
+		alert("need a name");
+	else {
+		
+		$.ajax({
+			url: 'updateNameByID.php',
+			type: 'GET',
+			data: {
+				id:$("#fabricinfo").text().substr(0, $("#fabricinfo").text().indexOf(':')),
+				name: $("#fabricname").val()
+			},
+			complete: function(xhr, status) {
+				curFabric--;
+				nextFabric();
+			}
+		});
+	}
+}
+
+function updateFabric() {
+	// update to new RGB values
+	if ($("#rgbvalue").val() === "")
+		alert("need rgb value");
+	else {
+		var hex = $("#rgbvalue").val();
+		// convert hex to rgb
+		var bigint = parseInt(hex, 16);
+		var color = {r:0, g:0, b:0};
+		color.r = (bigint >> 16) & 255;
+		color.g = (bigint >> 8) & 255;
+		color.b = bigint & 255;
+		
+		var lab=rgb2lab(color);
+		
+		var colorID = ('000'+color.r).slice(-3) + ('000'+color.g).slice(-3) + ('000' + color.b).slice(-3);
+		// update color info in the database
+		$.ajax({
+			url: 'updateColorByID.php',
+			type: 'GET',
+			data: {
+				id:$("#fabricinfo").text().substr(0, $("#fabricinfo").text().indexOf(':')),
+				colorID: colorID,
+				red: color.r,
+				green: color.g,
+				blue: color.b,
+				CIEL:lab.CIEL,
+				CIEa:lab.CIEa,
+				CIEb:lab.CIEb
+			}, 
+			complete: function(xhr, status) {
+				$("#errorMessage").html(status + "<BR>");
+				curFabric--;
+				nextFabric();
+			}
+		});
+	}
 }
 
 function processImage(imgURL) {

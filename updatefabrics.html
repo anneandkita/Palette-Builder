@@ -1,0 +1,26 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Fabric Processor</title>
+    <script type="text/javascript" src="js/jquery-1.8.1.min.js"></script>
+    <script type="text/javascript" src="js/colorutils.js"></script>
+    <script type="text/javascript" src="js/updatefabrics.js"></script>
+</head>
+
+<body>
+<canvas id="imgFrame" width=700 height=400>
+Your browser does not support this application. Please update your browser or try a different browser.
+</canvas>
+<div id="paletteColor" style="background-color: #999999; width: 150px; height: 100px;"></div>
+<div id="rgb">&nbsp;</div>
+<button type="button" id="ok">OK as is</button>
+&nbsp;RGB: <input type="text" id="rgbvalue">
+<button type="button" id="update">Update RGB</button>
+&nbsp;Name: <input type="text" id="fabricname">
+<button type="button" id="updatename">Update Name</button>
+&nbsp;skip to ID: <input type="number" id="newidtext">
+<button type="button" id="newid">Skip</button>
+<div id="fabricinfo"></div>
+<div id="errorMessage"></div>
+</body>
+</html>

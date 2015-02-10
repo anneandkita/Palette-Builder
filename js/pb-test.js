@@ -27,7 +27,7 @@ var initialWidth;
 var i;
 var paletteSpacing = 5;
 var filename;
-var matching = "kona";
+var matching = "moda";
 var saveMatching = true;
 // height/width of hex value div
 var hexDivSize = 40;
@@ -44,11 +44,11 @@ function startApp() {
 	document.getElementById('imageUploadBrowse').addEventListener('change', loadImage, false);
 	
 	// setup for the share button
-	var shareButton = $("#shareImage");
+/*	var shareButton = $("#shareImage");
 	shareButton.mousedown(shareImage);
 	shareButton.attr("title", "Share your palette to Flickr");
 	// hide until an image is loaded
-	shareButton.hide();
+	shareButton.hide(); */
 
 	// setup for the feedback button
 	$("#feedback").mousedown(feedback);
@@ -190,8 +190,12 @@ function startApp() {
 		$.cookie('matchwhat', matching, { expires: 365 });
 		if (matching === "hex")
 			$('.matchwhat').text("Match: Hex Values");
+		else if (matching === "both")
+			$('.matchwhat').text("Match: All Solids");
 		else if (matching === "kona")
 			$('.matchwhat').text("Match: Kona Cottons");
+		else if (matching === "moda")
+			$('.matchwhat').text("Match: Moda Bella Solids");
 		else {
 			$('.matchwhat').text("Match: Aurifil Threads");
 		}
@@ -200,12 +204,16 @@ function startApp() {
 	
 	matching = $.cookie('matchwhat');
 	if (matching == undefined)
-		matching = "kona";
+		matching = "moda";
 		
 	if (matching === "hex")
 		$('.matchwhat').text("Match: Hex Values");
+	else if (matching === "both")
+		$('.matchwhat').text("Match: All Solids");	
 	else if (matching === "kona")
 		$('.matchwhat').text("Match: Kona Cottons");
+	else if (matching === "moda")
+		$('.matchwhat').text("Match: Moda Bella Solids");
 	else {
 		$('.matchwhat').text("Match: Aurifil Threads");
 	}
@@ -583,13 +591,36 @@ function getOffset(object, offset)
 
 function addColor() {
 	paletteSize++;
-
+	
 	// can't have palettes bigger than 8, and can't add colors past the length of the master palette
-	if (paletteSize >= maxPaletteSize || paletteSize >= palette.length)
+	if (paletteSize >= maxPaletteSize) // || paletteSize >= palette.length)
 	{
 		newColorIcon.hide();
 	}
-	
+
+	if (paletteSize > palette.length)
+	{
+		// pick random color from image
+		var randomPixel = Math.floor(Math.random() * imgData.data.length/4) * 4;
+		var r = imgData.data[randomPixel];
+		var g = imgData.data[randomPixel+1];
+		var b = imgData.data[randomPixel+2];
+		
+		// add another random color to palette
+		palette.push({r: r, g: g, b: b});
+		var Lab = rgb2lab(palette[paletteSize-1]);
+		palette[paletteSize-1].CIEL = Lab.CIEL;
+		palette[paletteSize-1].CIEa = Lab.CIEa;
+		palette[paletteSize-1].CIEb = Lab.CIEb;
+		
+		var x = (randomPixel / 4) % img.width; //(imgScale*img.width);
+		var y = (randomPixel / 4) / img.width; //(imgScale*img.width);
+		paletteCircles[paletteSize-1] = {x:x, y:y};
+		
+		reDraw(paletteSize-1);
+		return;
+	}
+		
 	// figure out location for new circle
 	var newCircleID = paletteSize-1;
 	var colorDist = null;
@@ -731,17 +762,116 @@ function drawColorMatch(indexColor) {
 					  		var hexgreen = ("00" + parseInt(rgb["green"]).toString(16)).substr(-2);
 					  		var hexblue = ("00" + parseInt(rgb["blue"]).toString(16)).substr(-2);
 								
-							matchDiv[i].html("<div id='hex" + i + "' style='float: left; background-color: #" + hexred + hexgreen + hexblue + "; height: " + hexDivSize + "px; width: " + hexDivSize + "px;'>&nbsp;</div>");
+							matchDiv[i].html("<div id='hex" + i + "' style='float: left; background-color: #" + hexred + hexgreen + hexblue + "; height: " + hexDivSize + "px; width: " + hexDivSize + "px;'>&nbsp;&nbsp;</div>");
 							matchDiv[i].append("&nbsp;" + data[j] + " - " + data[j+1]);
 					    }
-						matchDiv[i].append("<BR>");
+					//	matchDiv[i].append("<BR>");
 					  }
 				  } 
 				});		
 			})(i);
 		}
 		break;
+		case "moda":
+		// for each color
+		for (var i=startNum; i<endNum; i++)
+		{
+			(function (i)
+			{
+				var paletteL = palette[i].CIEL;
+				var palettea = palette[i].CIEa;
+				var paletteb = palette[i].CIEb;
+				
+				matchDiv[i].show();
+				matchDiv[i].html("");
+				// find closest matching solid fabric
+				$.ajax({
+				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestModa.php',
+				  type: 'GET',
+				  data: {
+				  	CIEL: paletteL,
+				  	CIEa: palettea,
+				  	CIEb: paletteb
+				  },
+				  
+				  complete: function(xhr, status) {
+					  if (status === 'error' || !xhr.responseText) {
+					       alert("error: " + xhr.responseText);
+					  }
+					  else {
+					  	var data = jQuery.parseJSON(xhr.responseText);
+					  	for (var j=0 ; j < data.length; j+=3)
+					  	{
+					  		//add the image and the name
+					  		if (j > 1)
+					  		{
+					  			matchDiv[i].append(" or ");
+					  		}
+					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\">Bella Solids " + data[j+1].replace(/_/g," "));
+					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
+					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
+					  		// compliant by then.
+					  		kona[i] = data[j+2];
+					  		
+					    }
+//						matchDiv[i].append("<BR>");
+					  }
+				  } 
+				});		
+			})(i);
+		}
+		
+		break;
 		case "kona":
+		// for each color
+		for (var i=startNum; i<endNum; i++)
+		{
+			(function (i)
+			{
+				var paletteL = palette[i].CIEL;
+				var palettea = palette[i].CIEa;
+				var paletteb = palette[i].CIEb;
+				
+				matchDiv[i].show();
+				matchDiv[i].html("");
+				// find closest matching solid fabric
+				$.ajax({
+				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestKona.php',
+				  type: 'GET',
+				  data: {
+				  	CIEL: paletteL,
+				  	CIEa: palettea,
+				  	CIEb: paletteb
+				  },
+				  
+				  complete: function(xhr, status) {
+					  if (status === 'error' || !xhr.responseText) {
+					       alert("error: " + xhr.responseText);
+					  }
+					  else {
+					  	var data = jQuery.parseJSON(xhr.responseText);
+					  	for (var j=0 ; j < data.length; j+=3)
+					  	{
+					  		//add the image and the name
+					  		if (j > 1)
+					  		{
+					  			matchDiv[i].append(" or ");
+					  		}
+					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\">Kona Cotton " + data[j+1].replace(/_/g," "));
+					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
+					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
+					  		// compliant by then.
+					  		kona[i] = data[j+2];
+					  		
+					    }
+						//matchDiv[i].append("<BR>");
+					  }
+				  } 
+				});		
+			})(i);
+		}
+		break;
+		case "both":
 		// for each color
 		for (var i=startNum; i<endNum; i++)
 		{
@@ -769,27 +899,25 @@ function drawColorMatch(indexColor) {
 					  }
 					  else {
 					  	var data = jQuery.parseJSON(xhr.responseText);
-					  	for (var j=0 ; j < data.length; j+=3)
+					  	for (var j=0 ; j < data.length; j+=4)
 					  	{
 					  		//add the image and the name
 					  		if (j > 1)
 					  		{
 					  			matchDiv[i].append(" or ");
 					  		}
-					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\"> Kona " + data[j+1].replace(/_/g," "));
-					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
-					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
-					  		// compliant by then.
-					  		kona[i] = data[j+2];
+					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\">" + data[j+2] + " " + data[j+1].replace(/_/g," "));
+					  		kona[i] = data[j+3];
 					  		
 					    }
-						matchDiv[i].append("<BR>");
+					//	matchDiv[i].append("<BR>");
 					  }
 				  } 
 				});		
 			})(i);
 		}
 		break;
+		
 	}
 	
 	for (i=paletteSize; i<maxPaletteSize; i++)
@@ -843,8 +971,8 @@ function drawPalette() {
  //       bufferDiv[i].css("width", "0px");
 	}
 
-	// if we have less than the maximum allowed images, show the new palette color icon
-	if (paletteSize < maxPaletteSize && paletteSize < palette.length)
+	// if we have less than the maximum allowed colors, show the new color icon
+	if (paletteSize < maxPaletteSize) // && paletteSize < palette.length)
 	{
 			newIconShown = true;
 			newColorIcon.show();

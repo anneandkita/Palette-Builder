@@ -73,6 +73,53 @@ if (mysqli_connect_errno($con))
 }
 else 
 {
+// find thread colors not in the color table
+/*	$sql = "SELECT * from threadcolor";
+	$result = mysqli_query($con, $sql);
+	
+	while ($row = mysqli_fetch_array($result)) {
+		print_r($row["id"] ."<br>");
+		
+		// see if it is in color
+		$sql = "SELECT * from color WHERE id=$row[color]";
+		$result2 = mysqli_query($con, $sql);
+		if (mysqli_num_rows($result2)==0)
+			print_r("Missing " + $row["color"] + "<br>");
+	}
+	*/
+	$sql = "DELETE FROM threadcolor WHERE id=-1";
+	mysqli_query($con, $sql);
+/*	// remove colors that are not referenced by anything
+	$sql= "SELECT * FROM color";
+	$result = mysqli_query($con,$sql);
+	while ($row = mysqli_fetch_array($result)) {
+		print_r($row["id"] . "<br>");
+		// see if they are referenced in fabriccolor or threadcolor
+		$sql = "SELECT * FROM fabriccolor WHERE color=$row[id]";
+		$result2 = mysqli_query($con,$sql);
+		if (mysqli_num_rows($result2)==0)
+		{
+			$sql = "SELECT * FROM threadcolor WHERE color=$row[id]";
+			$result2 = mysqli_query($con,$sql);
+			
+			if (mysqli_num_rows($result2) == 0)
+			{
+				$sql = "DELETE FROM color WHERE id=$row[id]";
+				mysqli_query($con,$sql);
+				print_r($row["id"] . "is not used<br>");
+			}
+		}
+	}
+	*/
+		
+	// remove bella solids so we can start fresh
+//	$sql = "DELETE FROM fabric WHERE line=\"Bella Solids\"";
+//	$result = mysqli_query($con, $sql) or die (mysqli_error($con));
+//	print_r ($result);	
+
+	//$sql = "DELETE FROM fabriccolor WHERE id=-1";
+	//$result = mysqli_query($con, $sql) or die (mysqli_error($con));
+	//print_r ($result);	
 	
 /*	// read in csv file with aurifil information
 	ini_set("auto_detect_line_endings", true);
@@ -87,7 +134,7 @@ else
 	            echo $data[$c] . "<br />\n";
 	        }
 */
-// add white and black to aurifil table
+/* add white and black to aurifil table
 			// sku, manufacturer, name, r, g, b
 			$tableName = "thread";
 			$sku = 2024;
@@ -155,7 +202,7 @@ else
 			}
 				
 			
-/*			// fill in aurifil table
+*//*			// fill in aurifil table
 	        // sku, manufacturer, name, r, g, b
 	        $tableName = "thread";
 	        $sku = intval($data[0]);
@@ -175,34 +222,23 @@ else
 			        echo "thread table error!! " . mysqli_error($con);  
 			}
 	    */
-	    /*
+	    
 			// calculate Lab from RGB values
-			$red = intval($data[3]);
-			$green = intval($data[4]);
-			$blue = intval($data[5]);
+	/*		$red = 0;
+			$green = 0;
+			$blue = 0;
 			
 			$CIELab = RGBToLab($red, $green, $blue);
 			
 			// fill in threadcolor table
 			$tableName = "threadcolor";
-			
-			// get id
-			$sql = "SELECT * FROM thread WHERE sku=$data[0]";
-			$threadID = -1;
-			$result = mysqli_query($con, $sql) or die (mysqli_error($con));
-			while ($row = mysqli_fetch_array($result)) {
-				// list the fabrics we've found
-				$threadID = $row["id"];
-			}
+			$threadID = 202;
 			
 			// threadcolor = id (fabric), color (rgbmunge)
-			$color = str_pad($red, 3, '0', STR_PAD_LEFT);
-			$color = $color . str_pad($green, 3, '0', STR_PAD_LEFT);
-			$color = $color . str_pad($blue, 3, '0', STR_PAD_LEFT);
-			
-			$sql = "INSERT INTO $tableName (id, color)
-					VALUES ($threadID, $color)";
-					
+			$color = 0; //str_pad($red, 3, '0', STR_PAD_LEFT);
+			//$color = $color . str_pad($green, 3, '0', STR_PAD_LEFT);
+			//$color = $color . str_pad($blue, 3, '0', STR_PAD_LEFT);
+			/*$sql = "UPDATE $tableName SET color=$color WHERE id=$threadID";		
 			$result = mysqli_query($con, $sql);
 			
 			if ($result)
@@ -224,15 +260,15 @@ else
 			else {
 				echo "color table error!! " . mysqli_error($con);
 			}
-			
-		}
+						
+		} 
 
 	    fclose($handle);
-	}	
+	}	*/
 	
 	// remove pomegranite
-	/*$tableName = "fabric";
-	$cid = 247;
+/*	$tableName = "fabric";
+	$cid = 452;
 	
 	$sql = "DELETE FROM $tableName
 	WHERE id = $cid";
@@ -244,12 +280,12 @@ else
 	$sql = "DELETE FROM $tableName
 	WHERE id = $cid";
 	mysqli_query($con, $sql) or die ("couldn't delete fabriccolor");
-	echo "fabriccolor deleted<br>"; */
+	echo "fabriccolor deleted<br>";
 	
 	// remove old colors and insert new ones
 	
 	// remove colors
-/*
+
 	// papaya
 	$tableName = "color";
 	$cid = 25616040;
@@ -374,13 +410,13 @@ else
 	$CIEa = -23.422;
 	$CIEb = 4.787;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 188;
 	
 	$sql = "UPDATE $tableName
@@ -401,13 +437,13 @@ else
 	$CIEa = 33.024;
 	$CIEb = 40.805;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 180;
 	
 	$sql = "UPDATE $tableName
@@ -428,13 +464,13 @@ else
 	$CIEa = 64.524;
 	$CIEb = 51.788;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 213;
 	
 	$sql = "UPDATE $tableName
@@ -455,13 +491,13 @@ else
 	$CIEa = 58.790;
 	$CIEb = 56.768;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 231;
 	
 	$sql = "UPDATE $tableName
@@ -482,13 +518,13 @@ else
 		$CIEa = 47.647;
 		$CIEb = 64.683;
 		
-		$sql = "INSERT INTO $tableName 
+		/*$sql = "INSERT INTO $tableName 
 			VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 		mysqli_query($con, $sql);
 		
 		echo "color inserted<BR>";
-		// change white to point to new color
-		$tableName = "fabriccolor";
+		*/// change white to point to new color
+/*		$tableName = "fabriccolor";
 		$id = 237;
 		
 		$sql = "UPDATE $tableName
@@ -509,13 +545,13 @@ else
 	$CIEa = 6.632;
 	$CIEb = 78.680;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 43;
 	
 	$sql = "UPDATE $tableName
@@ -536,13 +572,13 @@ else
 	$CIEa = 57.669;
 	$CIEb = 39.256;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 73;
 	
 	$sql = "UPDATE $tableName
@@ -563,13 +599,13 @@ else
 	$CIEa = 50.005;
 	$CIEb = 67.154;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 96;
 	
 	$sql = "UPDATE $tableName
@@ -590,13 +626,13 @@ else
 	$CIEa = 65.954;
 	$CIEb = 61.990;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 128;
 	
 	$sql = "UPDATE $tableName
@@ -617,13 +653,13 @@ else
 	$CIEa = 29.545;
 	$CIEb = 67.191;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 154;
 	
 	$sql = "UPDATE $tableName
@@ -644,13 +680,13 @@ else
 	$CIEa = 38.106;
 	$CIEb = 70.827;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 159;
 	
 	$sql = "UPDATE $tableName
@@ -671,13 +707,13 @@ else
 	$CIEa = 34.434;
 	$CIEb = 28.679;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 160;
 	
 	$sql = "UPDATE $tableName
@@ -698,13 +734,13 @@ else
 	$CIEa = 6.663;
 	$CIEb = 60.084;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 176;
 	
 	$sql = "UPDATE $tableName
@@ -725,13 +761,13 @@ else
 	$CIEa = 16.009;
 	$CIEb = 54.682;
 	
-	$sql = "INSERT INTO $tableName 
+	/*$sql = "INSERT INTO $tableName 
 		VALUES ($cid, $colorRed, $colorGreen, $colorBlue, $CIEL, $CIEa, $CIEb)";
 	mysqli_query($con, $sql);
 	
 	echo "color inserted<BR>";
-	// change white to point to new color
-	$tableName = "fabriccolor";
+	*/// change white to point to new color
+/*	$tableName = "fabriccolor";
 	$id = 174;
 	
 	$sql = "UPDATE $tableName
@@ -741,7 +777,8 @@ else
 
 	echo "ochre updated<BR>";
 
-*/
+//*/
+
 	$con->close();
 }
 	

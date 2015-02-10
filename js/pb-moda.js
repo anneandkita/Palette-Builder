@@ -31,10 +31,7 @@ var matching = "moda";
 var saveMatching = true;
 // height/width of hex value div
 var hexDivSize = 40;
-// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
-// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
-// compliant by then.
-var kona = []; 
+var moda = []; 
 
 // I'm creating a lot of the elements on the fly here because it's easier than updating the Wordpress host that the app is buried inside. Wordpress likes to lose ids and stuff if you accidently load the post in Visual style instead of Text style.
 function startApp() {
@@ -130,7 +127,7 @@ function startApp() {
 			.attr("id", "remColor"+i)
 			.attr("title", "Remove this color from palette")
 			.addClass("button grey newcolor")
-			.html('<div><img src="/blog/wp-includes/images/minus.png"></div>');
+			.html('<div><img src="http://www.play-crafts.com/images/minus.png"></div>');
 		$("#palette" + i).append($colorDiv);
 		$("#remColor" + i).mousedown(remColor);
 		$("#remColor" + i).hide();
@@ -190,10 +187,6 @@ function startApp() {
 		$.cookie('matchwhat', matching, { expires: 365 });
 		if (matching === "hex")
 			$('.matchwhat').text("Match: Hex Values");
-		else if (matching === "both")
-			$('.matchwhat').text("Match: All Solids");
-		else if (matching === "kona")
-			$('.matchwhat').text("Match: Kona Cottons");
 		else if (matching === "moda")
 			$('.matchwhat').text("Match: Moda Bella Solids");
 		else {
@@ -208,10 +201,6 @@ function startApp() {
 		
 	if (matching === "hex")
 		$('.matchwhat').text("Match: Hex Values");
-	else if (matching === "both")
-		$('.matchwhat').text("Match: All Solids");	
-	else if (matching === "kona")
-		$('.matchwhat').text("Match: Kona Cottons");
 	else if (matching === "moda")
 		$('.matchwhat').text("Match: Moda Bella Solids");
 	else {
@@ -387,13 +376,10 @@ function createImage() {
 			}
 			// otherwise we need to draw the image in that div
 			else {
-				// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
-				// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
-				// compliant by then.
 				// 0-pad if necessary
-				var hexred = ("00" + parseInt(kona[i]["red"]).toString(16)).substr(-2);
-				var hexgreen = ("00" + parseInt(kona[i]["green"]).toString(16)).substr(-2);
-				var hexblue = ("00" + parseInt(kona[i]["blue"]).toString(16)).substr(-2);
+				var hexred = ("00" + parseInt(moda[i]["red"]).toString(16)).substr(-2);
+				var hexgreen = ("00" + parseInt(moda[i]["green"]).toString(16)).substr(-2);
+				var hexblue = ("00" + parseInt(moda[i]["blue"]).toString(16)).substr(-2);
 				curctx.fillStyle = "#" + hexred + hexgreen + hexblue;
 				curctx.fillRect(rx, ry, rw, rh);
 				//ctx.drawImage($("#matched"+i).get(0), rx, ry, hexDivSize, hexDivSize);
@@ -808,10 +794,7 @@ function drawColorMatch(indexColor) {
 					  			matchDiv[i].append(" or ");
 					  		}
 					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\">Bella Solids " + data[j+1].replace(/_/g," "));
-					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
-					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
-					  		// compliant by then.
-					  		kona[i] = data[j+2];
+					  		moda[i] = data[j+2];
 					  		
 					    }
 //						matchDiv[i].append("<BR>");
@@ -821,103 +804,7 @@ function drawColorMatch(indexColor) {
 			})(i);
 		}
 		
-		break;
-		case "kona":
-		// for each color
-		for (var i=startNum; i<endNum; i++)
-		{
-			(function (i)
-			{
-				var paletteL = palette[i].CIEL;
-				var palettea = palette[i].CIEa;
-				var paletteb = palette[i].CIEb;
-				
-				matchDiv[i].show();
-				matchDiv[i].html("");
-				// find closest matching solid fabric
-				$.ajax({
-				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestKona.php',
-				  type: 'GET',
-				  data: {
-				  	CIEL: paletteL,
-				  	CIEa: palettea,
-				  	CIEb: paletteb
-				  },
-				  
-				  complete: function(xhr, status) {
-					  if (status === 'error' || !xhr.responseText) {
-					       alert("error: " + xhr.responseText);
-					  }
-					  else {
-					  	var data = jQuery.parseJSON(xhr.responseText);
-					  	for (var j=0 ; j < data.length; j+=3)
-					  	{
-					  		//add the image and the name
-					  		if (j > 1)
-					  		{
-					  			matchDiv[i].append(" or ");
-					  		}
-					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\">Kona Cotton " + data[j+1].replace(/_/g," "));
-					  		// this is a hack to get around tainted canvases by just drawing the color instead of using the kona image
-					  		// this is a bad hack. And is going to suck later when we're not using solids. Hopefully IE will be 
-					  		// compliant by then.
-					  		kona[i] = data[j+2];
-					  		
-					    }
-						//matchDiv[i].append("<BR>");
-					  }
-				  } 
-				});		
-			})(i);
-		}
-		break;
-		case "both":
-		// for each color
-		for (var i=startNum; i<endNum; i++)
-		{
-			(function (i)
-			{
-				var paletteL = palette[i].CIEL;
-				var palettea = palette[i].CIEa;
-				var paletteb = palette[i].CIEb;
-				
-				matchDiv[i].show();
-				matchDiv[i].html("");
-				// find closest matching solid fabric
-				$.ajax({
-				  url: 'http://ec2-54-244-186-162.us-west-2.compute.amazonaws.com/getClosestFabric.php',
-				  type: 'GET',
-				  data: {
-				  	CIEL: paletteL,
-				  	CIEa: palettea,
-				  	CIEb: paletteb
-				  },
-				  
-				  complete: function(xhr, status) {
-					  if (status === 'error' || !xhr.responseText) {
-					       alert("error: " + xhr.responseText);
-					  }
-					  else {
-					  	var data = jQuery.parseJSON(xhr.responseText);
-					  	for (var j=0 ; j < data.length; j+=4)
-					  	{
-					  		//add the image and the name
-					  		if (j > 1)
-					  		{
-					  			matchDiv[i].append(" or ");
-					  		}
-					  		matchDiv[i].append("<img id='matched" + i + "' style='width:40px !important; vertical-align:middle' src=\"" + data[j] + "\"> " + data[j+2] + " " + data[j+1].replace(/_/g," "));
-					  		kona[i] = data[j+3];
-					  		
-					    }
-					//	matchDiv[i].append("<BR>");
-					  }
-				  } 
-				});		
-			})(i);
-		}
-		break;
-		
+		break;		
 	}
 	
 	for (i=paletteSize; i<maxPaletteSize; i++)

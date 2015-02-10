@@ -117,7 +117,7 @@ else
 			
 			// does this entry exist already
 			// TODO this causes issues if the fabric names are the same
-			$sql = "SELECT * FROM $tableName WHERE name = '$fabricName' LIMIT 1";
+			$sql = "SELECT * FROM $tableName WHERE name = '$fabricName' AND line = '$fabricLine' LIMIT 1";
 			$result = mysqli_query($con, $sql);
 			
 			if($result->num_rows > 0)

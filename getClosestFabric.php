@@ -75,6 +75,7 @@ else
 		while ($row = mysqli_fetch_array($result)) {
 			$returns[] = $row["url"];
 			$returns[] = $row["name"];
+			$returns[] = $row["line"];
 			$returns[] = $closestRGB;
 		}
 	}

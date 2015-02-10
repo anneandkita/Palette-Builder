@@ -1,5 +1,5 @@
 <?php 
 echo ""
-     .json_encode(scandir('./fabrics/Robert_Kaufman/Kona_Cotton/'))
+     .json_encode(scandir('./fabrics/Moda/Bella_Solids/'))
      ."";
 ?>
